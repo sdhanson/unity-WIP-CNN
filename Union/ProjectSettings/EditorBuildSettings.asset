@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/MainMenu.unity
+    guid: 3c5b23412bff28a42868061a6708ccae
+  - enabled: 0
+    path: Assets/Scenes/CW4 Practice Phase.unity
+    guid: 92e7bcf632989e54b8af74d72fbdaac5
+  - enabled: 0
+    path: Assets/Scenes/CW4 Learning Phase.unity
+    guid: 1361150efb0633342bc8fdf2d6374314
+  - enabled: 0
+    path: Assets/Scenes/Joes/CW4 Joe Test Phase.unity
+    guid: ca906463dbce1ac4d9d24b5823d9f9fb
+  - enabled: 0
+    path: Assets/Scenes/Resetting Learning Phase.unity
+    guid: d2b0268222cf846469322aa097912031
+  - enabled: 0
+    path: Assets/Scenes/Resetting Practice Phase.unity
+    guid: a7418ed2780bf2647b54e4cb6d3d925f
+  - enabled: 0
+    path: Assets/Scenes/Joes/Resetting Joe Test Phase.unity
+    guid: 236a40794f2612f498d0fe96a55324b3
+  - enabled: 0
+    path: Assets/Scenes/Joes/CW4 Rick Learning Phase.unity
+    guid: a5461d1b8bdebe94a8751f908081fe24
+  - enabled: 0
+    path: Assets/Scenes/Joes/CW4 Rick Test Phase.unity
+    guid: 9e5175c4dee5f0d47a43ce6207344448
+  - enabled: 0
+    path: Assets/Scenes/Joes/Resetting Rick Learning Phase.unity
+    guid: 277f3ad2aa9491944a3263a49fac4f93
+  - enabled: 0
+    path: Assets/Scenes/Joes/Resetting Rick Test Phase.unity
+    guid: 996f6ba7de7326e45bc94d3c004c6250
+  - enabled: 0
+    path: Assets/Scenes/CW4 Test Phase.unity
+    guid: 9b8aba1127d04df41ac8fd8bdfa3b6b7
+  - enabled: 0
+    path: Assets/Scenes/Resetting Test Phase.unity
+    guid: 45fc8e0b7ebaf7143a22f386a7e6fd99
+  - enabled: 0
+    path: Assets/Scenes/Rest Phase.unity
+    guid: 097157bfd7f98ce4ba3c375546e39b12
+  - enabled: 0
+    path: Assets/CW4 Oculus Go.unity
+    guid: b593529c22dbc804f9d251fabb25a093
+  - enabled: 1
+    path: Assets/Scenes/CNN CW4 Practice Phase.unity
+    guid: b03da453d4da3004d90f8a68c5ef669b
