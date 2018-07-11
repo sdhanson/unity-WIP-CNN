@@ -46,9 +46,9 @@ public class TrainingCNN : MonoBehaviour
 
 			float now = Time.time;
 			// This text is always added, making the file longer over time if it is not deleted
-			string appendText = display.acceleration.x + "," +
+			string appendText = "Sara," + "Sitting," + Time.time "," + display.acceleration.x + "," +
 			                    display.acceleration.y + "," +
-			                    display.acceleration.z + "," + "0" + "\n";
+			                    display.acceleration.z + "\n";
 			// ONLY 0 FOR STANDING NEED TO CHANGE TO ANYTHING ELSE
 			// DON'T NEED TO CLEAR OUT SCRIPT BETWEEN THE STANDING / SITTING JUST SWITCH THE 0 TO 1
 
