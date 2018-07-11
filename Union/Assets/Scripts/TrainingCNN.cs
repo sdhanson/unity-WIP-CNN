@@ -46,16 +46,11 @@ public class TrainingCNN : MonoBehaviour
 
 			float now = Time.time;
 			// This text is always added, making the file longer over time if it is not deleted
-			string appendText = "New Line: " +
-			                    now + " " +
-
-			                    display.acceleration.x + " " +
-			                    display.acceleration.y + " " +
-			                    display.acceleration.z + " " +
-
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x + " " +
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y + " " +
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\n";
+			string appendText = display.acceleration.x + "," +
+			                    display.acceleration.y + "," +
+			                    display.acceleration.z + "," + "0" + "\n";
+			// ONLY 0 FOR STANDING NEED TO CHANGE TO ANYTHING ELSE
+			// DON'T NEED TO CLEAR OUT SCRIPT BETWEEN THE STANDING / SITTING JUST SWITCH THE 0 TO 1
 
 			File.AppendAllText (path, appendText);
 
