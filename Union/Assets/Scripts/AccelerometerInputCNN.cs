@@ -8,12 +8,14 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using System.Threading;
 
 using TensorFlow;
 
 
 public class AccelerometerInputCNN : MonoBehaviour
 {
+    Thread t;
 
 	private float yaw;
 	private float rad;
@@ -44,7 +46,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 
 	// third value corresponds to inputWidth
 	public TextAsset graphModel;
-	private float[,,,] inputTensor = new float[1, 1, 90, 1];
+    private float[,,,] inputTensor = new float[1, 1, 90, 1];
 
 	// queue for keeping track of values for tensor
 	//	private Queue<float> accelQ;
@@ -65,9 +67,14 @@ public class AccelerometerInputCNN : MonoBehaviour
 	int activity = 0;
 	bool here = false;
 
+    float inT = -1000000;
 
 
-	OVRDisplay display;
+    int index = 0;
+
+
+
+    OVRDisplay display;
 
 	void Start ()
 	{
@@ -92,6 +99,9 @@ public class AccelerometerInputCNN : MonoBehaviour
 //		accelQ = new Queue<float> ();
 		accelL = new List<float> ();
 
+        t = new Thread(manager);
+        t.Start();
+
 	}
 
 	void FixedUpdate () //was previously FixedUpdate()
@@ -101,7 +111,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 		string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-		string appendText = "\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10}",
+		string appendText = "\r\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10}",
 			                    DateTime.Now.ToString (), Time.time, 
 
 			                    display.acceleration.x, 
@@ -112,27 +122,38 @@ public class AccelerometerInputCNN : MonoBehaviour
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y,
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z,
 		
-			                    confidence, sum, test, activity, here, accelL.Count);
+			                    confidence, sum, test, activity, here, accelL.Count, inT);
 
 		File.AppendAllText (path, appendText);
 
 		// do the movement algorithm, more details inside
-//		move ();
-
-		int cn = cnn ();
+		move ();
 
 		if (myClient != null)
 			myClient.Send (MESSAGE_DATA, new TDMessage (this.transform.localPosition, Camera.main.transform.eulerAngles));
 	}
 
-	int evaluate ()
+    void OnApplicationQuit()
+    {
+        t.Abort();
+    }
+
+    void manager()
+    {
+        while(true)
+        {
+            Thread.Sleep(20);
+            cnn();
+        }
+    }
+
+    int evaluate ()
 	{
 
 		// countQ should equal inputWidth at this point
 //		int i = 0;
-		for (int i = 0; i < accelL.Count; i++) {
+	for (int i = 0; i < accelL.Count; i++) {
 			inputTensor [0, 0, i, 0] = accelL [i];
-			here = true;
 //			test = inputTensor [0, 0, i, 0];
 		}
 //		foreach (var tensor in accelQ) {
@@ -148,21 +169,29 @@ public class AccelerometerInputCNN : MonoBehaviour
 		var session = new TFSession (graph);
 		var runner = session.GetRunner ();
 
-		// set up input tensor and input
-		runner.AddInput (graph ["input_node"] [0], inputTensor);
-		// set up output tensor
-		runner.Fetch (graph ["output_node"] [0]);
+        // do input tensor list to array and make it one dimensional
+        var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
+        TFTensor input = inputTensor;
+//        input.op_Implicit(inputTensor);
 
-		// run model - CHECK THE FORMAT OF THE OUTPUT IN MINE AND IN MNIST ONE
-		float[,] recurrentTensor = runner.Run () [0].GetValue () as float[,];
 
-		// find the most confident answer
-		float highVal = 0;
+        // set up input tensor and input
+        runner.AddInput (graph ["input_placeholder_x"] [0], input);
+        here = true;
+        // set up output tensor
+        runner.Fetch (graph ["output_node"] [0]);
+
+        // run model - CHECK THE FORMAT OF THE OUTPUT IN MINE AND IN MNIST ONE
+        float[,] recurrentTensor = runner.Run () [0].GetValue () as float[,];
+ 
+
+        // find the most confident answer
+        float highVal = 0;
 		int highInd = -1;
 		sum = 0f;
 
 		for (int j = 0; j < activityIndexChoices; j++) {
-			test = recurrentTensor [0, 0];
+
 			confidence = recurrentTensor [0, j];
 			if (highInd > -1) {
 				if (recurrentTensor [0, j] > highVal) {
@@ -181,10 +210,10 @@ public class AccelerometerInputCNN : MonoBehaviour
 		return highInd;
 	}
 
-	int cnn ()
+	void cnn ()
 	{
-		float curr = display.acceleration.y; 
-		int index = -1;
+		float curr = display.acceleration.y;
+        inT = curr;
 
 		if (accelL.Count < inputWidth) {
 			accelL.Add (curr);
@@ -194,18 +223,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 			accelL.RemoveAt (0);
 		}
 
-//		if (countQ < inputWidth) {
-//			accelQ.Enqueue (curr);
-//			countQ++;
-//		}
-//		if (countQ == inputWidth) {
-//			index = evaluate ();
-//			accelQ.Dequeue ();
-//			countQ--;
-//		}
-
 		// if index is -1 then the queue has not been activated yet
-		return index;
 	}
 
 	// algorithm to determine if the user is looking around. Looking and walking generate similar gyro.accelerations, so we
@@ -242,10 +260,9 @@ public class AccelerometerInputCNN : MonoBehaviour
 
 		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
 
-		int activityIndex = cnn ();
-		activity = activityIndex;
+		activity = index;
 
-		if (activityIndex != standIndex) {
+		if (activity != standIndex) {
 			walking = true;
 		}
 

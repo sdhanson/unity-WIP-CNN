@@ -148,7 +148,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: WiP.Demo.resettingTest3
+    Android: WiP.Demo.resettingTestCNN
     Standalone: unity.DefaultCompany.UnionQQTY
     Tizen: com.VanderbiltUniversity.CW4_Reset
     iOS: com.VanderbiltUniversity.CW4_Reset
@@ -579,6 +579,7 @@ PlayerSettings:
   webGLUseWasm: 0
   webGLCompressionFormat: 1
   scriptingDefineSymbols:
+    1: ENABLE_TENSORFLOW
     7: ENABLE_TENSORFLOW;ENABLE_TENSORFLOWSHARP
   platformArchitecture: {}
   scriptingBackend:

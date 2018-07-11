@@ -40,11 +40,12 @@ public class TrainingCNN : MonoBehaviour
 		float prev = Time.time;
 
 		while (true) {
-			while (Time.time - prev < 0.01) {
+			while (Time.time - prev < 0.019) {
 				
 			}
 
-			float now = Time.time;
+            float t = Time.time;
+			float now = (float)System.Math.Round(Time.time, 2);
 			// This text is always added, making the file longer over time if it is not deleted
 			string appendText = "New Line: " +
 			                    now + " " +
@@ -55,11 +56,11 @@ public class TrainingCNN : MonoBehaviour
 
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x + " " +
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y + " " +
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\n";
+			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\r\n";
 
 			File.AppendAllText (path, appendText);
 
-			prev = now;
+			prev = t;
 		}
 	}
 }
