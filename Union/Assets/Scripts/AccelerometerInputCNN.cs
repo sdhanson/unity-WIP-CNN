@@ -15,7 +15,8 @@ using TensorFlow;
 
 public class AccelerometerInputCNN : MonoBehaviour
 {
-    Thread t;
+    Thread run;
+    Thread collect;
 
 	private float yaw;
 	private float rad;
@@ -58,7 +59,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 	private int standIndex = 0;
 
 	// how many options of activities we have - standing, walking, jogging
-	private int activityIndexChoices = 3;
+	private int activityIndexChoices = 2;
 
 	// FOR DEBUGGING PUTTING AT GLOBAL SCOPE
 	float confidence = 0;
@@ -66,13 +67,23 @@ public class AccelerometerInputCNN : MonoBehaviour
 	float test = 0f;
 	int activity = 0;
 	bool here = false;
-
-    float inT = -1000000;
+    bool longTime = false;
+    int line = 0;
+    int line1 = 0;
+    int line2 = 0;
+    int line3 = 0;
+    int line4 = 0;
+    int line5 = 0;
+    int line6 = 0;
+    int line7 = 0;
+    int line8 = 0;
 
 
     int index = 0;
+    int countCNN = 0;
+    float total = 0;
 
-
+    int diff = 20;
 
     OVRDisplay display;
 
@@ -99,8 +110,13 @@ public class AccelerometerInputCNN : MonoBehaviour
 //		accelQ = new Queue<float> ();
 		accelL = new List<float> ();
 
-        t = new Thread(manager);
-        t.Start();
+
+        // start collection
+        collect = new Thread(manageCollection);
+        collect.Start();
+
+        run = new Thread(manageCNN);
+        run.Start();
 
 	}
 
@@ -111,7 +127,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 		string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-		string appendText = "\r\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10}",
+		string appendText = "\r\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10} {21,10} {22,10} {23,10} {24,10} {25,10}",
 			                    DateTime.Now.ToString (), Time.time, 
 
 			                    display.acceleration.x, 
@@ -122,7 +138,9 @@ public class AccelerometerInputCNN : MonoBehaviour
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y,
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z,
 		
-			                    confidence, sum, test, index, here, accelL.Count, inT);
+			                    confidence, sum, test, index, here, accelL.Count, countCNN, total, diff,
+                                
+                                line, line1, line2, line3, line4, line5, line6, line7, line8);
 
 		File.AppendAllText (path, appendText);
 
@@ -135,19 +153,60 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        t.Abort();
+        collect.Abort();
+        run.Abort();
     }
 
-    void manager()
+    void manageCollection()
     {
         while(true)
         {
             Thread.Sleep(10);
-            cnn();
+            collectValues();
         }
     }
 
-    int evaluate ()
+    void collectValues()
+    {
+        float curr = display.acceleration.y;
+        test = curr;
+
+        if (accelL.Count < inputWidth)
+        {
+            accelL.Add(curr);
+        }
+        if (accelL.Count == inputWidth)
+        {
+            accelL.RemoveAt(0);
+        }
+
+    }
+
+    void manageCNN()
+    {
+
+        while(true)
+        {
+            Thread.Sleep(100);
+            float prev = Time.time;
+            evaluate();
+            float len = Time.time - prev;
+            diff = (int)((0.5 - len)*1000);
+            if(diff < 0)
+            {
+                diff *= -1;
+            }
+            //if(diff < 400)
+            //{
+            //    longTime = true;
+            //} else
+            //{
+            //    longTime = false;
+            //}
+        }
+    }
+
+    void evaluate ()
 	{
 
 	    // convert from list to array 
@@ -156,26 +215,88 @@ public class AccelerometerInputCNN : MonoBehaviour
 			test = inputTensor [0, 0, i, 0];
 		}
 
+        float[,] recurrentTensor;
+
+        using (var graph = new TFGraph())
+        {
+            graph.Import(graphModel.bytes);
+            //if(longTime)
+            //{
+                line++;
+            //}
+            var session = new TFSession(graph);
+            //if (longTime)
+            //{
+                line1++;
+            //}
+            var runner = session.GetRunner();
+            //if (longTime)
+            //{
+                line2++;
+            //}
+
+            // do input tensor list to array and make it one dimensional
+            var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
+            //if (longTime)
+            //{
+                line3++;
+            //}
+            TFTensor input = inputTensor;
+            //if (longTime)
+            //{
+                line4++;
+            //}
+
+            // set up input tensor and input
+            runner.AddInput(graph["input_placeholder_x"][0], input);
+            //if (longTime)
+            //{
+                line5++;
+            //}
+
+            // set up output tensor
+            runner.Fetch(graph["output_node"][0]);
+            //if (longTime)
+            //{
+                line6++;
+            //}
+
+            // run model
+            recurrentTensor = runner.Run()[0].GetValue() as float[,];
+            //if (longTime)
+            //{
+                line7++;
+            //}
+            here = true;
+            //TFDisposable tf1 = new TFDisposable(graph);
+            //TFDisposable tf2 = new TFDisposable(session);
+            //TFDisposable tf3 = new TFDisposable(runner);
+            session.Dispose();
+            graph.Dispose();
+            //runner.Dispose();
+
+        }
 
         // create tensorflow model
-		var graph = new TFGraph ();
-		graph.Import (graphModel.bytes);
-		var session = new TFSession (graph);
-		var runner = session.GetRunner ();
 
-        // do input tensor list to array and make it one dimensional
-        var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
-        TFTensor input = inputTensor;
+        //var graph = new TFGraph();
+        //graph.Import (graphModel.bytes);
+        //var session = new TFSession (graph);
+        //var runner = session.GetRunner ();
 
-        // set up input tensor and input
-        runner.AddInput (graph ["input_placeholder_x"] [0], input);
-        here = true;
-        // set up output tensor
-        runner.Fetch (graph ["output_node"] [0]);
+        //      // do input tensor list to array and make it one dimensional
+        //      var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
+        //      TFTensor input = inputTensor;
 
-        // run model
-        float[,] recurrentTensor = runner.Run () [0].GetValue () as float[,];
- 
+        //      // set up input tensor and input
+        //      runner.AddInput (graph ["input_placeholder_x"] [0], input);
+
+        //      // set up output tensor
+        //      runner.Fetch (graph ["output_node"] [0]);
+
+        //      // run model
+        //      float[,] recurrentTensor = runner.Run () [0].GetValue () as float[,];
+        //      here = true;
 
         // find the most confident answer
         float highVal = 0;
@@ -195,27 +316,32 @@ public class AccelerometerInputCNN : MonoBehaviour
 				highInd = j;
 			}
 
-			// debugging - sum should = 1 at the end
+            // debugging - sum should = 1 at the end
 			sum += confidence;
-		}
+        }
 
-		return highInd;
-	}
+        index = highInd;
+        line8++;
+        countCNN++;
+    }
 
-	void cnn ()
-	{
-		float curr = display.acceleration.y;
-        inT = curr;
+ //   void cnn ()
+	//{
+	//	float curr = display.acceleration.y;
 
-		if (accelL.Count < inputWidth) {
-			accelL.Add (curr);
-		}
-		if (accelL.Count == inputWidth) {
-			index = evaluate ();
-			accelL.RemoveAt (0);
-		}
-		// if index is -1 then the queue has not been activated yet
-	}
+	//	if (accelL.Count < inputWidth) {
+	//		accelL.Add (curr);
+	//	}
+	//	if (accelL.Count == inputWidth) {
+ //           //index = evaluate ();
+ //           float time1 = Time.time;
+ //           evaluate();
+ //           total = Time.time - time1;
+	//		accelL.RemoveAt (0);
+ //           countCNN++;
+ //       }
+	//	// if index is -1 then the queue has not been activated yet
+	//}
 
 	// algorithm to determine if the user is looking around. Looking and walking generate similar gyro.accelerations, so we
 	//want to ignore movements that could be spawned from looking around. Makes sure user's head orientation is in certain window
@@ -258,7 +384,6 @@ public class AccelerometerInputCNN : MonoBehaviour
         {
             velocity = 0f;
         }
-
 		// if the user isn't looking and is walking then set the velocity based on increasing or decreasing speed
 	//	if (!looking && walking) {
 	//		if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {

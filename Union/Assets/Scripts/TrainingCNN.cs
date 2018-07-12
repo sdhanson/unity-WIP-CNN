@@ -40,33 +40,31 @@ public class TrainingCNN : MonoBehaviour
 		float prev = Time.time;
 
 		while (true) {
-			while (Time.time - prev < 0.019) {
-				
-			}
+            Thread.Sleep(1);
 
             float t = Time.time;
 			float now = (float)System.Math.Round(Time.time, 2);
 			// This text is always added, making the file longer over time if it is not deleted
-<<<<<<< HEAD
-			string appendText = "New Line: " +
-			                    now + " " +
+//<<<<<<< HEAD
+//			string appendText = "New Line: " +
+//			                    now + " " +
 
-			                    display.acceleration.x + " " +
-			                    display.acceleration.y + " " +
-			                    display.acceleration.z + " " +
+//			                    display.acceleration.x + " " +
+//			                    display.acceleration.y + " " +
+//			                    display.acceleration.z + " " +
 
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x + " " +
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y + " " +
-			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\r\n";
-=======
-			string appendText = "Sara," + "Sitting," + Time.time + "," + display.acceleration.x + "," +
+//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x + " " +
+//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y + " " +
+//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\r\n";
+
+//=======
+			string appendText = "Sara," + "Standing," + Time.time + "," + display.acceleration.x + "," +
 			                    display.acceleration.y + "," +
 			                    display.acceleration.z + "\n";
 			// ONLY 0 FOR STANDING NEED TO CHANGE TO ANYTHING ELSE
 			// DON'T NEED TO CLEAR OUT SCRIPT BETWEEN THE STANDING / SITTING JUST SWITCH THE 0 TO 1
->>>>>>> 3d5b9fed67cc1ad6dcb4d8e60688cd757d6acf0b
-
-			File.AppendAllText (path, appendText);
+//>>>>>>> 3d5b9fed67cc1ad6dcb4d8e60688cd757d6acf0b
+            File.AppendAllText (path, appendText);
 
 			prev = t;
 		}
