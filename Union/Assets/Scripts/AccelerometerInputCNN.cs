@@ -122,7 +122,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y,
 			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z,
 		
-			                    confidence, sum, test, activity, here, accelL.Count, inT);
+			                    confidence, sum, test, index, here, accelL.Count, inT);
 
 		File.AppendAllText (path, appendText);
 
@@ -142,7 +142,7 @@ public class AccelerometerInputCNN : MonoBehaviour
     {
         while(true)
         {
-            Thread.Sleep(20);
+            Thread.Sleep(10);
             cnn();
         }
     }
@@ -150,20 +150,14 @@ public class AccelerometerInputCNN : MonoBehaviour
     int evaluate ()
 	{
 
-		// countQ should equal inputWidth at this point
-//		int i = 0;
-	for (int i = 0; i < accelL.Count; i++) {
+	    // convert from list to array 
+	    for (int i = 0; i < accelL.Count; i++) {
 			inputTensor [0, 0, i, 0] = accelL [i];
-//			test = inputTensor [0, 0, i, 0];
+			test = inputTensor [0, 0, i, 0];
 		}
-//		foreach (var tensor in accelQ) {
-//			inputTensor [1, 1, i, 1] = tensor;
-//			test = inputTensor [1, 1, i, 1];
-//			i++;
-//		}
 
 
-//// create tensorflow model
+        // create tensorflow model
 		var graph = new TFGraph ();
 		graph.Import (graphModel.bytes);
 		var session = new TFSession (graph);
@@ -172,8 +166,6 @@ public class AccelerometerInputCNN : MonoBehaviour
         // do input tensor list to array and make it one dimensional
         var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
         TFTensor input = inputTensor;
-//        input.op_Implicit(inputTensor);
-
 
         // set up input tensor and input
         runner.AddInput (graph ["input_placeholder_x"] [0], input);
@@ -181,7 +173,7 @@ public class AccelerometerInputCNN : MonoBehaviour
         // set up output tensor
         runner.Fetch (graph ["output_node"] [0]);
 
-        // run model - CHECK THE FORMAT OF THE OUTPUT IN MINE AND IN MNIST ONE
+        // run model
         float[,] recurrentTensor = runner.Run () [0].GetValue () as float[,];
  
 
@@ -222,7 +214,6 @@ public class AccelerometerInputCNN : MonoBehaviour
 			index = evaluate ();
 			accelL.RemoveAt (0);
 		}
-
 		// if index is -1 then the queue has not been activated yet
 	}
 
@@ -260,36 +251,38 @@ public class AccelerometerInputCNN : MonoBehaviour
 
 		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
 
-		activity = index;
-
-		if (activity != standIndex) {
+		if ((index != standIndex) && !looking) {
 			walking = true;
-		}
+            velocity = 1.65f;
+		} else
+        {
+            velocity = 0f;
+        }
 
 		// if the user isn't looking and is walking then set the velocity based on increasing or decreasing speed
-		if (!looking && walking) {
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-				if (wasTwo) { //we are transitioning from phase 2 to 1
-					method1StartTimeGrow = Time.time;
-					wasTwo = false;
-					wasOne = true;
-				}
-			} else {
-				if (wasOne) {
-					method1StartTimeDecay = Time.time;
-					wasOne = false;
-					wasTwo = true;
-				}
-			}
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-				velocity = 1.65f - (1.65f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.2f); //grow
-			} else {
-				// if the acceleration values are low, indicates the user is walking slowly, and exponentially decrease the velocity to 0
-				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
-			}
-		} else {
-			velocity = 0f;
-		}
+	//	if (!looking && walking) {
+	//		if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
+	//			if (wasTwo) { //we are transitioning from phase 2 to 1
+	//				method1StartTimeGrow = Time.time;
+	//				wasTwo = false;
+	//				wasOne = true;
+	//			}
+	//		} else {
+	//			if (wasOne) {
+	//				method1StartTimeDecay = Time.time;
+	//				wasOne = false;
+	//				wasTwo = true;
+	//			}
+	//		}
+	//		if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
+	//			velocity = 1.65f - (1.65f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.2f); //grow
+	//		} else {
+	//			// if the acceleration values are low, indicates the user is walking slowly, and exponentially decrease the velocity to 0
+	//			velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
+	//		}
+	//	} else {
+	//		velocity = 0f;
+	//	}
 
 		// multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
 		// by the unit vector in the look direction to get displacement.
