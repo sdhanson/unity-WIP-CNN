@@ -11,6 +11,7 @@ public class TrainingCNN : MonoBehaviour
 
 	Thread t;
 	OVRDisplay display;
+    int count = 0;
 
 	// Use this for initialization
 	void Start ()
@@ -40,7 +41,7 @@ public class TrainingCNN : MonoBehaviour
 		float prev = Time.time;
 
 		while (true) {
-            Thread.Sleep(1);
+            Thread.Sleep(10);
 
             float t = Time.time;
 			float now = (float)System.Math.Round(Time.time, 2);
@@ -67,6 +68,7 @@ public class TrainingCNN : MonoBehaviour
             File.AppendAllText (path, appendText);
 
 			prev = t;
+            count++;
 		}
 	}
 }
