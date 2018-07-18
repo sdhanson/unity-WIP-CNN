@@ -82,6 +82,9 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     int diff = 20;
 
+    float ctime = 0f;
+    float ptime = 0f;
+
     OVRDisplay display;
 
     void Start()
@@ -89,128 +92,128 @@ public class AccelerometerInputCNN : MonoBehaviour
 #if UNITY_ANDROID
 		TensorFlowSharp.Android.NativeBinding.Init ();
 #endif
-        List<double> accelLD = new List<double> { 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.8534063, 0.1810237, 0.1810237, 0.1810237, 0.2892097, 0.2892097, 0.4697649, 0.4697649, 0.6117187, 0.6117187, 0.4614316, 0.4614316, 0.09997891, 0.09997891, 0.1368275, 0.1368275, 0.2076406, 0.2076406, 0.1143057, 0.1143057, 0.05343885, 0.05343885, 0.06347427, 0.06347427, 0.2016512, 0.2016512, 0.4057969, 0.4057969, 0.5163392, 0.5163392, 0.5666367, 0.5666367, 0.3878307, 0.3878307, 0.3653036, 0.3653036, 0.3653036, 0.2814721, 0.2814721, 0.4435554, 0.4435554, 0.4428172, 0.4476064, 0.4476064, 0.4476064, 0.2500583, 0.2500583, 0.3372402, 0.3372402, 0.2490275, 0.2490275, 0.1253104, 0.1253104, 0.2016077, 0.2016077, 0.2058328, 0.2058328 };
-        accelL = new List<float>();
-        for (int k=0; k <accelLD.Count; k++)
-        {
-            accelL.Add((float)accelLD[k]);
-        }
+        //List<double> accelLD = new List<double> { 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1139805, 0.1072912, 0.1072912, 0.1962212, 0.1962212, 0.3138215, 0.3138215, 0.3138215, 0.1719452, 0.1719452, 0.05325568, 0.05325568, 0.1709562, 0.1709562, 0.3227122, 0.3227122, 0.3896469, 0.3896469, 0.1290453, 0.1290453, 0.1729235, 0.1729235, 0.06428681, 0.06428681, 0.3944435, 0.3944435, 0.5930174, 0.5930174, 0.4377055, 0.4377055, 0.2751099, 0.2751099, 0.1984278, 0.1984278, 0.5268957, 0.5268957, 0.5268957, 0.6580063, 0.4031855, 0.4031855, 0.2062997, 0.2062997, 0.1068822, 0.1068822, 0.1068822, 0.3127724, 0.3127724, 0.4308511, 0.4308511, 0.3025039, 0.3025039, 0.2085527, 0.222002, 0.222002, 0.222002, 0.5509907, 0.5509907, 0.4942238, 0.4942238 };
+        //accelL = new List<float>();
+        //for (int k=0; k <accelLD.Count; k++)
+        //{
+        //    accelL.Add((float)accelLD[k]);
+        //}
         // enable the gyroscope on the phone
         Input.gyro.enabled = true;
         // if we are on the right VR, then setup a client device to read transform data from
         if (Application.platform == RuntimePlatform.Android)
             SetupClient();
 
-        //// user must be looking ahead at the start
-        //eulerX = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x;
-        //eulerZ = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z;
+        // user must be looking ahead at the start
+        eulerX = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x;
+        eulerZ = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z;
 
-        //// initialize the oculus go display
-        //display = new OVRDisplay();
+        // initialize the oculus go display
+        display = new OVRDisplay();
 
-        //// initialize the cnn queue
-        ////		accelQ = new Queue<float> ();
-        //accelL = new List<float>();
+        // initialize the cnn queue
+        //		accelQ = new Queue<float> ();
+        accelL = new List<float>();
 
-        // start collection
-        //collect = new Thread(manageCollection);
-        //collect.Start();
+        //start collection
+        collect = new Thread(manageCollection);
+        collect.Start();
 
-        //run = new Thread(manageCNN);
-        //run.Start();
-        int i;
-        for (i = 0; i < accelL.Count; i++)
-        {
-            inputTensor[0, 0, i, 0] = accelL[i];
-            test = inputTensor[0, 0, i, 0];
-        }
-        if (i != 90)
-        {
-            inputTensor[0, 0, 89, 0] = 0;
-        }
-        float[,] recurrentTensor;
+        run = new Thread(manageCNN);
+        run.Start();
+        //int i;
+        //for (i = 0; i < accelL.Count; i++)
+        //{
+        //    inputTensor[0, 0, i, 0] = accelL[i];
+        //    test = inputTensor[0, 0, i, 0];
+        //}
+        //if (i != 90)
+        //{
+        //    inputTensor[0, 0, 89, 0] = 0;
+        //}
+        //float[,] recurrentTensor;
 
-            // create tensorflow model
-            using (var graph = new TFGraph())
-            {
-                graph.Import(graphModel.bytes);
-                var session = new TFSession(graph);
-                var runner = session.GetRunner();
+        //     create tensorflow model
+        //    using (var graph = new TFGraph())
+        //    {
+        //        graph.Import(graphModel.bytes);
+        //        var session = new TFSession(graph);
+        //        var runner = session.GetRunner();
 
-                // do input tensor list to array and make it one dimensional
-                //var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
-                TFTensor input = inputTensor;
+        //         do input tensor list to array and make it one dimensional
+        //        var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
+        //        TFTensor input = inputTensor;
 
 
-                // set up input tensor and input
-                runner.AddInput(graph["input_placeholder_x"][0], input);
+        //         set up input tensor and input
+        //        runner.AddInput(graph["input_placeholder_x"][0], input);
 
-                // set up output tensor
-                runner.Fetch(graph["output_node"][0]);
+        //         set up output tensor
+        //        runner.Fetch(graph["output_node"][0]);
 
-                // run model
-                recurrentTensor = runner.Run()[0].GetValue() as float[,];
-                here = true;
-                session.Dispose();
-                graph.Dispose();
+        //         run model
+        //        recurrentTensor = runner.Run()[0].GetValue() as float[,];
+        //        here = true;
+        //        session.Dispose();
+        //        graph.Dispose();
 
-            }
+        //    }
 
-            // find the most confident answer
-            float highVal = 0;
-            int highInd = -1;
-            sum = 0f;
+        //     find the most confident answer
+        //    float highVal = 0;
+        //    int highInd = -1;
+        //    sum = 0f;
 
-            for (int j = 0; j<activityIndexChoices; j++)
-            {
+        //    for (int j = 0; j<activityIndexChoices; j++)
+        //    {
 
-                confidence = recurrentTensor[0, j];
-                if (highInd > -1)
-                {
-                    if (recurrentTensor[0, j] > highVal)
-                    {
-                        highVal = confidence;
-                        highInd = j;
-                    }
-                }
-                else
-                {
-                    highVal = confidence;
-                    highInd = j;
-                }
+        //        confidence = recurrentTensor[0, j];
+        //        if (highInd > -1)
+        //        {
+        //            if (recurrentTensor[0, j] > highVal)
+        //            {
+        //                highVal = confidence;
+        //                highInd = j;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            highVal = confidence;
+        //            highInd = j;
+        //        }
 
-                // debugging - sum should = 1 at the end
-                sum += confidence;
-            }
-            Debug.Log(highInd + " " + recurrentTensor[0,0] + " " + recurrentTensor[0, 1]);
+        //         debugging - sum should = 1 at the end
+        //        sum += confidence;
+        //    }
+        //    Debug.Log(highInd + " " + recurrentTensor[0,0] + " " + recurrentTensor[0, 1]);
     }
 
     void FixedUpdate() //was previously FixedUpdate()
     {
         // send the current transform data to the server (should probably be wrapped in an if isAndroid but I haven't tested)
 
-        //string path = Application.persistentDataPath + "/WIP_looking.txt";
+        string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-        //string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10}",
-        //                        DateTime.Now.ToString(), Time.time,
+        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10}",
+                                DateTime.Now.ToString(), Time.time,
 
-        //                        display.acceleration.x,
-        //                        display.acceleration.y,
-        //                        display.acceleration.z,
+                                display.acceleration.x,
+                                display.acceleration.y,
+                                display.acceleration.z,
 
-        //                        InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x,
-        //                        InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.y,
-        //                        InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z,
+                                InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x,
+                                InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.y,
+                                InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z,
 
-        //                        confidence, sum, test, index, here, accelL.Count, countCNN, total, diff,
+                                confidence, sum, test, index, here, accelL.Count, countCNN, total, diff,
 
-        //                        line, test1, test2);
+                                line, test1, test2, ctime);
 
-        //File.AppendAllText(path, appendText);
+        File.AppendAllText(path, appendText);
 
-        //// do the movement algorithm, more details inside
-        //move();
+        // do the movement algorithm, more details inside
+        move();
 
         if (myClient != null)
             myClient.Send(MESSAGE_DATA, new TDMessage(this.transform.localPosition, Camera.main.transform.eulerAngles));
@@ -224,9 +227,10 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     void manageCollection()
     {
+        Thread.Sleep(1000);
         while (true)
         {
-            Thread.Sleep(8);
+            Thread.Sleep(5);
             collectValues();
         }
     }
@@ -238,10 +242,15 @@ public class AccelerometerInputCNN : MonoBehaviour
 
         if (accelL.Count < inputWidth)
         {
+            if(accelL.Count == 0)
+            {
+                ptime = Time.time;
+            }
             accelL.Add(curr);
         }
         if (accelL.Count == inputWidth)
         {
+            ctime = Time.time - ptime;
             if (one)
             {
                 outL();

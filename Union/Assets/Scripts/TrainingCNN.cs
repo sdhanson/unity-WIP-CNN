@@ -59,7 +59,7 @@ public class TrainingCNN : MonoBehaviour
 //			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\r\n";
 
 //=======
-			string appendText = "Sara," + "Standing," + Time.time + "," + display.acceleration.x + "," +
+			string appendText = "Priya," + "Standing," + Time.time + "," + display.acceleration.x + "," +
 			                    display.acceleration.y + "," +
 			                    display.acceleration.z + "\n";
 			// ONLY 0 FOR STANDING NEED TO CHANGE TO ANYTHING ELSE
