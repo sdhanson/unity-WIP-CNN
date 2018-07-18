@@ -300,50 +300,55 @@ public class AccelerometerInputCNN : MonoBehaviour
 		zVal = 0.55f * Mathf.Cos (rad);
 		xVal = 0.55f * Mathf.Sin (rad);
     	
-    bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 15f));
+    		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 15f));
 
 		if (index != standIndex) {
 			walking = true;
 		} else {
-      walking = false;
-    }
-
-		if (!walking || looking) {
+      			walking = false;
+    		}
+		if(!walking || looking) {
 			velocity = 0f;
 		} else {
-			if ((Input.gyro.userAcceleration.y >= 0.075f || Input.gyro.userAcceleration.y <= -0.075f)) {
-				if (wasTwo) { //we are transitioning from phase 2 to 1
-					method1StartTimeGrow = Time.time;
-					wasTwo = false;
-					wasOne = true;
-				}
-			} else {
-				if (wasOne) {
-					method1StartTimeDecay = Time.time;
-					wasOne = false;
-					wasTwo = true;
-				}
-			}
-	
-			//Movement is done exponentially. We want the user to quickly accelerate and quickly decelerate as to minimize
-			//starting and stopping latency.
-			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f)) {
-				velocity = 3.0f - (3.0f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.5f); //grow
-			} else {
-				if (velocity > 2.5f) {
-					decayRate = 0.05f;
-				} else if (velocity > 2.0f) {
-					decayRate = 0.05f;
-				} else if (velocity > 1.0f) {
-					decayRate = 0.1f;
-				} else if (velocity < 0.5f) {
-					decayRate = 0.2f;
-				} else if (velocity < 0.1f) {
-					decayRate = 0.08f;
-				}
-				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
-			}
+			velocity = 2.5f;
 		}
+
+// 		if (!walking || looking) {
+// 			velocity = 0f;
+// 		} else {
+// 			if ((Input.gyro.userAcceleration.y >= 0.075f || Input.gyro.userAcceleration.y <= -0.075f)) {
+// 				if (wasTwo) { //we are transitioning from phase 2 to 1
+// 					method1StartTimeGrow = Time.time;
+// 					wasTwo = false;
+// 					wasOne = true;
+// 				}
+// 			} else {
+// 				if (wasOne) {
+// 					method1StartTimeDecay = Time.time;
+// 					wasOne = false;
+// 					wasTwo = true;
+// 				}
+// 			}
+	
+// 			//Movement is done exponentially. We want the user to quickly accelerate and quickly decelerate as to minimize
+// 			//starting and stopping latency.
+// 			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f)) {
+// 				velocity = 3.0f - (3.0f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.5f); //grow
+// 			} else {
+// 				if (velocity > 2.5f) {
+// 					decayRate = 0.05f;
+// 				} else if (velocity > 2.0f) {
+// 					decayRate = 0.05f;
+// 				} else if (velocity > 1.0f) {
+// 					decayRate = 0.1f;
+// 				} else if (velocity < 0.5f) {
+// 					decayRate = 0.2f;
+// 				} else if (velocity < 0.1f) {
+// 					decayRate = 0.08f;
+// 				}
+// 				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
+// 			}
+// 		}
 
 		//Multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
 		//    by the unit vector in the look direction to get displacement.
