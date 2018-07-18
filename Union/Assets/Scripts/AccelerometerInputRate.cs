@@ -61,6 +61,9 @@ public class AccelerometerInputRate : MonoBehaviour {
 
     // variable for debugging to see if we are counting the right number of steps
     private float stepCount = 0f;
+    
+    float totalVelocity = 0f;
+    int totalVelocityCount = 0;
 
     // for the interpolation
     float a;
@@ -94,7 +97,7 @@ public class AccelerometerInputRate : MonoBehaviour {
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-        string appendText = "\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10}",
+        string appendText = "\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10} {14, 10} {15, 10}",
                                 DateTime.Now.ToString(), Time.time,
 
                                 "ACCELERATION_XYZ: ",
@@ -111,7 +114,8 @@ public class AccelerometerInputRate : MonoBehaviour {
                                 velocity.ToString(),
                                 stepTime.ToString(),
                                 stepCount.ToString(),
-                                maxt.ToString());
+                                maxt.ToString(),
+                                                totalVelocity.ToString(), totalVelocityCount.ToString());
 
         File.AppendAllText(path, appendText);
 
@@ -236,7 +240,9 @@ public class AccelerometerInputRate : MonoBehaviour {
         xVal = Mathf.Sin(rad);
 
         bool looking = (look(eulerX, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x, 20f) || look(eulerZ, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z, 20f));
-        frequency();
+        //frequency();
+        // JUST USE SET VELOCITY MAX AT THE TIME TO SEE THE AVERAGE
+        velocityMax = 0.75f;
 
         // if the user isn't looking then manage their walking - LOOKING ISNT IMPLEMENTED YET SO ALWAYS FALSE ATM
         if (!looking)
@@ -282,6 +288,8 @@ public class AccelerometerInputRate : MonoBehaviour {
         // multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
         // by the unit vector in the look direction to get displacement.
         transform.Translate(xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
+        totalVelocity += velocity;
+        totalVelocityCount++;
     }
 
     #region NetworkingCode
