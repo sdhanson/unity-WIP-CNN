@@ -67,7 +67,6 @@ public class AccelerometerInputRate : MonoBehaviour {
     float b;
     float c;
 
-
     OVRDisplay display;
 
     void Start()
