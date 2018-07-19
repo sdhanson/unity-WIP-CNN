@@ -65,10 +65,12 @@ public class AccelerometerInputRate : MonoBehaviour {
     float totalVelocity = 0f;
     int totalVelocityCount = 0;
 
+    float test = 0f;
+
     // for the interpolation
-    float a;
-    float b;
-    float c;
+    float a = -0.08928571f;
+    float b = 0.78571429f;
+    float c = 0.42946429f;
 
     OVRDisplay display;
 
@@ -96,7 +98,7 @@ public class AccelerometerInputRate : MonoBehaviour {
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-        string appendText = "\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10} {14, 10} {15, 10}",
+        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10} {14, 10} {15, 10}",
                                 DateTime.Now.ToString(), Time.time,
 
                                 "ACCELERATION_XYZ: ",
@@ -113,7 +115,7 @@ public class AccelerometerInputRate : MonoBehaviour {
                                 velocity.ToString(),
                                 stepTime.ToString(),
                                 stepCount.ToString(),
-                                maxt.ToString(),
+                                test.ToString(),
                                                 totalVelocity.ToString(), totalVelocityCount.ToString());
 
         File.AppendAllText(path, appendText);
@@ -135,6 +137,7 @@ public class AccelerometerInputRate : MonoBehaviour {
         {
             stepTime = Time.time - prevTime;
             float freq = 1.0f / stepTime;
+            test = freq;
             velocityMax = a * Mathf.Pow(freq, 2.0f) + b * freq + c;
         }
         else
@@ -239,9 +242,9 @@ public class AccelerometerInputRate : MonoBehaviour {
         xVal = Mathf.Sin(rad);
 
         bool looking = (look(eulerX, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x, 20f) || look(eulerZ, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z, 20f));
-        //frequency();
-        // JUST USE SET VELOCITY MAX AT THE TIME TO SEE THE AVERAGE
-        velocityMax = 0.75f;
+        frequency();
+        //JUST USE SET VELOCITY MAX AT THE TIME TO SEE THE AVERAGE
+        //velocityMax = 1.6f;
 
         // if the user isn't looking then manage their walking - LOOKING ISNT IMPLEMENTED YET SO ALWAYS FALSE ATM
         if (!looking)
@@ -266,7 +269,7 @@ public class AccelerometerInputRate : MonoBehaviour {
             }
             if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
             {
-                velocity = velocityMax - (velocityMax - velocity) * Mathf.Exp((method1StartTimeGrow - Time.time) / 0.2f); //grow
+                velocity = velocityMax + velocityMax / 4.0f - (velocityMax + velocityMax / 4.0f - velocity) * Mathf.Exp((method1StartTimeGrow - Time.time) / 0.3f); //grow
             }
             else
             {
@@ -286,6 +289,10 @@ public class AccelerometerInputRate : MonoBehaviour {
 
         // multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
         // by the unit vector in the look direction to get displacement.
+        if(velocity < 0f)
+        {
+            velocity = 0f;
+        }
         transform.Translate(xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
         totalVelocity += velocity;
         totalVelocityCount++;

@@ -13,7 +13,7 @@ using System.Threading;
 using TensorFlow;
 
 
-public class AccelerometerInputCNN : MonoBehaviour
+public class AccelerometerInputCNNGear : MonoBehaviour
 {
     Thread run;
     Thread collect;
@@ -79,8 +79,6 @@ public class AccelerometerInputCNN : MonoBehaviour
     bool one = true;
 
     int diff = 20;
-    
-    private float decayRate = 0.2f;
 
     void Start()
     {
@@ -119,7 +117,7 @@ public class AccelerometerInputCNN : MonoBehaviour
         string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10}",
                                 DateTime.Now.ToString(), Time.time,
 
-                          Input.gyro.userAcceleration.x, 
+                                Input.gyro.userAcceleration.x, 
 			                    Input.gyro.userAcceleration.y, 
 			                    Input.gyro.userAcceleration.z,
 
@@ -158,7 +156,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     void collectValues()
     {
-        float curr = Mathf.Sqrt(Mathf.Pow(display.acceleration.x, 2) + Mathf.Pow(display.acceleration.y, 2) + Mathf.Pow(display.acceleration.z, 2));
+        float curr = Mathf.Sqrt(Mathf.Pow(Input.gyro.userAcceleration.x, 2) + Mathf.Pow(Input.gyro.userAcceleration.y, 2) + Mathf.Pow(Input.gyro.userAcceleration.z, 2));
         test = curr;
 
         if (accelL.Count < inputWidth)
