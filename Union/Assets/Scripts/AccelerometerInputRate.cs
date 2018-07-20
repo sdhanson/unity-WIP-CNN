@@ -63,14 +63,18 @@ public class AccelerometerInputRate : MonoBehaviour {
     private float stepCount = 0f;
     
     float totalVelocity = 0f;
+    float totalVelocityMax = 0f;
     int totalVelocityCount = 0;
 
     float test = 0f;
 
     // for the interpolation
-    float a = -0.08928571f;
-    float b = 0.78571429f;
-    float c = 0.42946429f;
+    //float a = -0.08928571f;
+    //float b = 0.78571429f;
+    //float c = 0.42946429f;
+    float a = -0.2536f;
+    float b = 1.03965f;
+    float c = 0.30079592f;
 
     OVRDisplay display;
 
@@ -114,7 +118,7 @@ public class AccelerometerInputRate : MonoBehaviour {
                                 velocityMax.ToString(),
                                 velocity.ToString(),
                                 stepTime.ToString(),
-                                stepCount.ToString(),
+                                totalVelocityMax.ToString(),
                                 test.ToString(),
                                                 totalVelocity.ToString(), totalVelocityCount.ToString());
 
@@ -138,7 +142,7 @@ public class AccelerometerInputRate : MonoBehaviour {
             stepTime = Time.time - prevTime;
             float freq = 1.0f / stepTime;
             test = freq;
-            velocityMax = a * Mathf.Pow(freq, 2.0f) + b * freq + c;
+           // velocityMax = a * Mathf.Pow(freq, 2.0f) + b * freq + c;
         }
         else
         {
@@ -244,7 +248,7 @@ public class AccelerometerInputRate : MonoBehaviour {
         bool looking = (look(eulerX, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x, 20f) || look(eulerZ, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z, 20f));
         frequency();
         //JUST USE SET VELOCITY MAX AT THE TIME TO SEE THE AVERAGE
-        //velocityMax = 1.6f;
+        velocityMax = 1.6f;
 
         // if the user isn't looking then manage their walking - LOOKING ISNT IMPLEMENTED YET SO ALWAYS FALSE ATM
         if (!looking)
@@ -269,7 +273,7 @@ public class AccelerometerInputRate : MonoBehaviour {
             }
             if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
             {
-                velocity = velocityMax + velocityMax / 4.0f - (velocityMax + velocityMax / 4.0f - velocity) * Mathf.Exp((method1StartTimeGrow - Time.time) / 0.3f); //grow
+                velocity = velocityMax + velocityMax / 4.0f - (velocityMax + velocityMax / 4.0f - velocity) * Mathf.Exp((method1StartTimeGrow - Time.time) / 0.5f); //grow
             }
             else
             {
@@ -294,6 +298,7 @@ public class AccelerometerInputRate : MonoBehaviour {
             velocity = 0f;
         }
         transform.Translate(xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
+        totalVelocityMax += velocityMax;
         totalVelocity += velocity;
         totalVelocityCount++;
     }
