@@ -56,7 +56,7 @@ public class TrainingStepsCNN : MonoBehaviour
             float t = Time.time;
 			float now = (float)System.Math.Round(Time.time, 2);
 
-			string appendText = "Priya," + "Standing," + Time.time + "," + display.acceleration.x + "," +
+			string appendText = "Sara," + "Walking," + Time.time + "," + display.acceleration.x + "," +
 			                    display.acceleration.y + "," +
 			                    display.acceleration.z + "\n";
             File.AppendAllText (path, appendText);

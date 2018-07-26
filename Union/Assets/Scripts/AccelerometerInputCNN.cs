@@ -43,23 +43,27 @@ public class AccelerometerInputCNN : MonoBehaviour
     private float height = 1.75f;
 
     // set by trained CNN model
-    public int inputWidth = 90;
+    public int inputWidth = 40;
 
     // third value corresponds to inputWidth
     public TextAsset graphModel;
-    private float[,,,] inputTensor = new float[1, 1, 90, 1];
+    private float[,,,] inputTensor = new float[1, 1, 40, 3];
 
     // queue for keeping track of values for tensor
     //	private Queue<float> accelQ;
-    private List<float> accelL;
+    //private List<float> accelL;
+    private List<float> accelX;
+    private List<float> accelY;
+    private List<float> accelZ;
     //	private int countQ = 0;
 
     // determine if person is walking from cnn returned value
     private bool walking = false;
-    private int standIndex = 1;
+    private int standIndex = 0;
+    private int lookIndex = 2;
 
     // how many options of activities we have - standing, walking, jogging
-    private int activityIndexChoices = 2;
+    private int activityIndexChoices = 3;
 
     // FOR DEBUGGING PUTTING AT GLOBAL SCOPE
     float confidence = 0;
@@ -71,7 +75,7 @@ public class AccelerometerInputCNN : MonoBehaviour
     float line = 0f;
 
 
-    int index = 1;
+    int index = 0;
     int countCNN = 0;
     float total = 0;
     float test1 = 0f;
@@ -113,7 +117,10 @@ public class AccelerometerInputCNN : MonoBehaviour
 
         // initialize the cnn queue
         //		accelQ = new Queue<float> ();
-        accelL = new List<float>();
+        //accelL = new List<float>();
+        accelX = new List<float>();
+        accelY = new List<float>();
+        accelZ = new List<float>();
 
         //start collection
         collect = new Thread(manageCollection);
@@ -195,7 +202,7 @@ public class AccelerometerInputCNN : MonoBehaviour
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10}",
+        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10} {21,10}",
                                 DateTime.Now.ToString(), Time.time,
 
                                 display.acceleration.x,
@@ -206,9 +213,9 @@ public class AccelerometerInputCNN : MonoBehaviour
                                 InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.y,
                                 InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z,
 
-                                confidence, sum, test, index, here, accelL.Count, countCNN, total, diff,
+                                confidence, sum, test, index, here, accelX.Count, countCNN, total, diff,
 
-                                line, test1, test2, ctime);
+                                line, test1, test2, test3, ctime);
 
         File.AppendAllText(path, appendText);
 
@@ -237,48 +244,81 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     void collectValues()
     {
-        float curr = Mathf.Sqrt(Mathf.Pow(display.acceleration.x, 2) + Mathf.Pow(display.acceleration.y, 2) + Mathf.Pow(display.acceleration.z, 2));
-        test = curr;
+        //float curr = Mathf.Sqrt(Mathf.Pow(display.acceleration.x, 2) + Mathf.Pow(display.acceleration.y, 2) + Mathf.Pow(display.acceleration.z, 2));
+        //float curr = display.acceleration.y;
+        //test = curr;
 
-        if (accelL.Count < inputWidth)
+        //if (accelL.Count < inputWidth)
+        //{
+        //    if(accelL.Count == 0)
+        //    {
+        //        ptime = Time.time;
+        //    }
+        //    accelL.Add(curr);
+        //}
+        //if (accelL.Count == inputWidth)
+        //{
+        //    ctime = Time.time - ptime;
+        //    if (one)
+        //    {
+        //        outL();
+        //        one = false;
+        //    }
+        //    accelL.RemoveAt(0);
+        //    accelL.Add(curr);
+        //}
+        //line = curr;
+
+        float currX = display.acceleration.x;
+        float currY = display.acceleration.y;
+        float currZ = display.acceleration.z;
+        test = currY;
+
+        if (accelX.Count < inputWidth)
         {
-            if(accelL.Count == 0)
+            if (accelX.Count == 0)
             {
                 ptime = Time.time;
             }
-            accelL.Add(curr);
+            accelX.Add(currX);
+            accelY.Add(currY);
+            accelZ.Add(currZ);
         }
-        if (accelL.Count == inputWidth)
+        if (accelX.Count == inputWidth)
         {
             ctime = Time.time - ptime;
-            if (one)
-            {
-                outL();
-                one = false;
-            }
-            accelL.RemoveAt(0);
-            accelL.Add(curr);
+            //if (one)
+            //{
+            //    outL();
+            //    one = false;
+            //}
+            accelX.RemoveAt(0);
+            accelY.RemoveAt(0);
+            accelZ.RemoveAt(0);
+            accelX.Add(currX);
+            accelY.Add(currY);
+            accelZ.Add(currZ);
         }
-        line = curr;
+        line = currY;
     }
 
-    void outL() {
+    //void outL() {
         
 
-        string path = Application.persistentDataPath + "/one.txt";
-        string append = "[";
+    //    string path = Application.persistentDataPath + "/one.txt";
+    //    string append = "[";
 
-        for (int i = 0; i < accelL.Count; i++)
-        {
-            append += accelL[i];
-            append += ",";
+    //    for (int i = 0; i < accelL.Count; i++)
+    //    {
+    //        append += accelL[i];
+    //        append += ",";
 
-        }
-        append += "]";
+    //    }
+    //    append += "]";
 
-        File.AppendAllText(path, append);
+    //    File.AppendAllText(path, append);
 
-    }
+    //}
 
     void manageCNN()
     {
@@ -300,27 +340,52 @@ public class AccelerometerInputCNN : MonoBehaviour
     void evaluate ()
 	{
         // convert from list to array 
-        if (accelL.Count == 90)
+
+        if (accelX.Count == inputWidth)
         {
+
             int i;
-            for (i = 0; i < accelL.Count; i++)
+            for (i = 0; i < accelX.Count; i++)
             {
-                inputTensor[0, 0, i, 0] = accelL[i];
+                inputTensor[0, 0, i, 0] = accelX[i];
                 test = inputTensor[0, 0, i, 0];
             }
-            if (i != 90)
+            if (i != inputWidth)
             {
-                inputTensor[0, 0, 89, 0] = 0;
+                inputTensor[0, 0, inputWidth - 1, 0] = 0;
             }
+
+            for (i = 0; i < accelY.Count; i++)
+            {
+                inputTensor[0, 0, i, 1] = accelY[i];
+            }
+            if (i != inputWidth)
+            {
+                inputTensor[0, 0, inputWidth - 1, 1] = 0;
+            }
+
+            for (i = 0; i < accelZ.Count; i++)
+            {
+                inputTensor[0, 0, i, 2] = accelZ[i];
+            }
+            if (i != inputWidth)
+            {
+                inputTensor[0, 0, inputWidth - 1, 2] = 0;
+            }
+
+
 
             float[,] recurrentTensor;
 
             // create tensorflow model
             using (var graph = new TFGraph())
             {
+
                 graph.Import(graphModel.bytes);
                 var session = new TFSession(graph);
+
                 var runner = session.GetRunner();
+
 
                 // do input tensor list to array and make it one dimensional
                 //var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
@@ -332,7 +397,6 @@ public class AccelerometerInputCNN : MonoBehaviour
 
                 // set up output tensor
                 runner.Fetch(graph["output_node"][0]);
-
                 // run model
                 recurrentTensor = runner.Run()[0].GetValue() as float[,];
                 here = true;
@@ -369,6 +433,7 @@ public class AccelerometerInputCNN : MonoBehaviour
             }
             test1 = recurrentTensor[0, 0];
             test2 = recurrentTensor[0, 1];
+            test3 = recurrentTensor[0, 2];
             index = highInd;
             countCNN++;
         }
@@ -409,7 +474,7 @@ public class AccelerometerInputCNN : MonoBehaviour
 
 		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
 
-		if (index != standIndex) {
+		if (index != standIndex && index != lookIndex) {
 			walking = true;
             velocity = 1.65f;
 		} else

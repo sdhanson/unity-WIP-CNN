@@ -5656,12 +5656,12 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1918647921}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b0c77a68f2ed404fac2f41aed2746a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputWidth: 90
+  inputWidth: 40
   graphModel: {fileID: 4900000, guid: 1d501c2dc07e4ca439a5c498e79ba73d, type: 3}
   message: 
   messageText: {fileID: 0}
@@ -5688,7 +5688,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f101100cd19e5a54f8c79378b1cce37b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputWidth: 90
+  inputWidth: 20
   graphModel: {fileID: 4900000, guid: 1d501c2dc07e4ca439a5c498e79ba73d, type: 3}
   message: 
   messageText: {fileID: 0}
@@ -5699,7 +5699,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1918647921}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c07e710c58d0b0741b2be8b067cd7080, type: 3}
   m_Name: 

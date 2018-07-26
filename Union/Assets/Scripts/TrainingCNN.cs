@@ -12,6 +12,9 @@ public class TrainingCNN : MonoBehaviour
 	Thread t;
 	OVRDisplay display;
     int count = 0;
+    float prevX = 0;
+    float prevY = 0;
+    float prevZ = 0;
 
 	// Use this for initialization
 	void Start ()
@@ -45,26 +48,35 @@ public class TrainingCNN : MonoBehaviour
 
             float t = Time.time;
 			float now = (float)System.Math.Round(Time.time, 2);
-			// This text is always added, making the file longer over time if it is not deleted
-//<<<<<<< HEAD
-//			string appendText = "New Line: " +
-//			                    now + " " +
+            // This text is always added, making the file longer over time if it is not deleted
 
-//			                    display.acceleration.x + " " +
-//			                    display.acceleration.y + " " +
-//			                    display.acceleration.z + " " +
+            // GET CHANGE IN ANGLES 
+            float changeX = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x - prevX;
+            if(changeX > 180 || changeX < -180)
+            {
+                changeX = 360 - changeX;
+            }
+            float changeY = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.y - prevY;
+            if (changeY > 180 || changeY < -180)
+            {
+                changeY = 360 - changeY;
+            }
+            float changeZ = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z - prevZ;
+            if (changeZ > 180 || changeZ < -180)
+            {
+                changeZ = 360 - changeZ;
+            }
 
-//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x + " " +
-//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.y + " " +
-//			                    InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z + "\r\n";
 
-//=======
-			string appendText = "Priya," + "Standing," + Time.time + "," + display.acceleration.x + "," +
+            string appendText = "Sara," + "Looking," + Time.time + "," + display.acceleration.x + "," +
 			                    display.acceleration.y + "," +
-			                    display.acceleration.z + "\n";
-			// ONLY 0 FOR STANDING NEED TO CHANGE TO ANYTHING ELSE
-			// DON'T NEED TO CLEAR OUT SCRIPT BETWEEN THE STANDING / SITTING JUST SWITCH THE 0 TO 1
-//>>>>>>> 3d5b9fed67cc1ad6dcb4d8e60688cd757d6acf0b
+			                    display.acceleration.z + 
+                                "," + changeX + "," +
+                                changeY + "," +
+                                changeZ +
+                                "\n";
+
+
             File.AppendAllText (path, appendText);
 
 			prev = t;
