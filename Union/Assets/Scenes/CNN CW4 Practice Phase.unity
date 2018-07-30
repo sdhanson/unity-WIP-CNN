@@ -5439,6 +5439,8 @@ GameObject:
   - component: {fileID: 1918647934}
   - component: {fileID: 1918647933}
   - component: {fileID: 1918647935}
+  - component: {fileID: 1918647937}
+  - component: {fileID: 1918647936}
   m_Layer: 0
   m_Name: TestObject
   m_TagString: Untagged
@@ -5656,7 +5658,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1918647921}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b0c77a68f2ed404fac2f41aed2746a7, type: 3}
   m_Name: 
@@ -5683,13 +5685,13 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1918647921}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f101100cd19e5a54f8c79378b1cce37b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputWidth: 20
-  graphModel: {fileID: 4900000, guid: 1d501c2dc07e4ca439a5c498e79ba73d, type: 3}
+  inputWidth: 60
+  graphModel: {fileID: 4900000, guid: 90e78b0ed47670041995ff4f077ba644, type: 3}
   message: 
   messageText: {fileID: 0}
   _connectionID: 0
@@ -5713,6 +5715,31 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa7b71f1c96f4d14fb07a8fe396753a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  message: 
+  messageText: {fileID: 0}
+  _connectionID: 0
+--- !u!114 &1918647936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1918647921}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e4756a8320934d4eb6a923d615f66cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1918647937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1918647921}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5c7fd4197322df40b19c14123edf14b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   message: 

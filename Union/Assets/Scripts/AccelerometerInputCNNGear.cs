@@ -43,18 +43,24 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     private float height = 1.75f;
 
     // set by trained CNN model
-    public int inputWidth = 90;
+    public int inputWidth = 60;
 
     // third value corresponds to inputWidth
     public TextAsset graphModel;
-    private float[,,,] inputTensor = new float[1, 1, 90, 1];
+    private float[,,,] inputTensor = new float[1, 1, 60, 3];
 
     // queue for keeping track of values for tensor
-    private List<float> accelL;
+    private List<float> accelX;
+    private List<float> accelY;
+    private List<float> accelZ;
+    private List<float> latch;
+    int latchSum = 0;
+    int latchWidth = 10;
 
     // determine if person is walking from cnn returned value
     private bool walking = false;
-    private int standIndex = 1;
+    private int standIndex = 0;
+    //private int lookIndex = 2;
 
     // how many options of activities we have - standing, walking
     private int activityIndexChoices = 2;
@@ -69,7 +75,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     float line = 0f;
 
 
-    int index = 1;
+    int index = 0;
     int countCNN = 0;
     float total = 0;
     float test1 = 0f;
@@ -97,7 +103,10 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         eulerZ = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z;
 
         // initialize the cnn queue
-        accelL = new List<float>();
+        accelX = new List<float>();
+        accelY = new List<float>();
+        accelZ = new List<float>();
+        latch = new List<float>();
 
         //start collection
         collect = new Thread(manageCollection);
@@ -114,7 +123,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10}",
+        string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10}",
                                 DateTime.Now.ToString(), Time.time,
 
                                 Input.gyro.userAcceleration.x, 
@@ -125,9 +134,9 @@ public class AccelerometerInputCNNGear : MonoBehaviour
                                 InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.y,
                                 InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z,
 
-                                confidence, sum, test, index, here, accelL.Count, countCNN, total, diff,
+                                confidence, sum, test, index, here, accelX.Count, countCNN, total, diff,
 
-                                line, test1, test2);
+                                line, test1, test2, latchSum);
 
         File.AppendAllText(path, appendText);
 
@@ -156,19 +165,27 @@ public class AccelerometerInputCNNGear : MonoBehaviour
 
     void collectValues()
     {
-        float curr = Mathf.Sqrt(Mathf.Pow(Input.gyro.userAcceleration.x, 2) + Mathf.Pow(Input.gyro.userAcceleration.y, 2) + Mathf.Pow(Input.gyro.userAcceleration.z, 2));
-        test = curr;
+        float currX = Input.gyro.userAcceleration.x;
+        float currY = Input.gyro.userAcceleration.y;
+        float currZ = Input.gyro.userAcceleration.z;
+        test = currY;
 
-        if (accelL.Count < inputWidth)
+        if (accelX.Count < inputWidth)
         {
-            accelL.Add(curr);
+            accelX.Add(currX);
+            accelY.Add(currY);
+            accelZ.Add(currZ);
         }
-        if (accelL.Count == inputWidth)
+        if (accelX.Count == inputWidth)
         {
-            accelL.RemoveAt(0);
-            accelL.Add(curr);
+            accelX.RemoveAt(0);
+            accelY.RemoveAt(0);
+            accelZ.RemoveAt(0);
+            accelX.Add(currX);
+            accelY.Add(currY);
+            accelZ.Add(currZ);
         }
-        line = curr;
+        line = currY;
     }
 
     void manageCNN()
@@ -176,7 +193,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
 
         while(true)
         {
-            Thread.Sleep(100);
+            Thread.Sleep(50);
             float prev = Time.time;
             evaluate();
             float len = Time.time - prev;
@@ -191,17 +208,36 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     void evaluate ()
 	{
         // convert from list to array 
-        if (accelL.Count == 90)
+        if (accelX.Count == inputWidth)
         {
+
             int i;
-            for (i = 0; i < accelL.Count; i++)
+            for (i = 0; i < accelX.Count; i++)
             {
-                inputTensor[0, 0, i, 0] = accelL[i];
+                inputTensor[0, 0, i, 0] = accelX[i];
                 test = inputTensor[0, 0, i, 0];
             }
-            if (i != 90)
+            if (i != inputWidth)
             {
-                inputTensor[0, 0, 89, 0] = 0;
+                inputTensor[0, 0, inputWidth - 1, 0] = 0;
+            }
+
+            for (i = 0; i < accelY.Count; i++)
+            {
+                inputTensor[0, 0, i, 1] = accelY[i];
+            }
+            if (i != inputWidth)
+            {
+                inputTensor[0, 0, inputWidth - 1, 1] = 0;
+            }
+
+            for (i = 0; i < accelZ.Count; i++)
+            {
+                inputTensor[0, 0, i, 2] = accelZ[i];
+            }
+            if (i != inputWidth)
+            {
+                inputTensor[0, 0, inputWidth - 1, 2] = 0;
             }
 
             float[,] recurrentTensor;
@@ -295,12 +331,23 @@ public class AccelerometerInputCNNGear : MonoBehaviour
 		//convert that value into radians because math uses radians
 		rad = yaw * Mathf.Deg2Rad;
 		//map that value onto the unit circle to faciliate movement in the look direction
-		zVal = 0.55f * Mathf.Cos (rad);
-		xVal = 0.55f * Mathf.Sin (rad);
+		zVal = Mathf.Cos (rad);
+		xVal = Mathf.Sin (rad);
     	
     		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 15f));
-
-		if (index != standIndex) {
+        if(latch.Count < latchWidth)
+        {
+            latch.Add(index);
+            latchSum += index;
+        } else
+        {
+            latchSum -= (int)latch[0];
+            latch.RemoveAt(0);
+            latchSum += index;
+            latch.Add(index);
+        }
+        
+        if (index != standIndex || latchSum > 0) {
 			walking = true;
 		} else {
       			walking = false;
