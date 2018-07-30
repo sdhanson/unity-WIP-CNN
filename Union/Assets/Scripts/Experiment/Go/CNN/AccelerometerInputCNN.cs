@@ -15,6 +15,9 @@ using TensorFlow;
 
 public class AccelerometerInputCNN : MonoBehaviour
 {
+    // set per person
+    public float height = 1.75f;
+
     Thread run;
     Thread collect;
 
@@ -38,9 +41,6 @@ public class AccelerometerInputCNN : MonoBehaviour
 
     // indicates if person is looking around - not implemented yet
     bool looking = false;
-
-    // set per person
-    private float height = 1.75f;
 
     // set by trained CNN model
     public int inputWidth = 40;

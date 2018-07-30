@@ -13,7 +13,7 @@ public class AccelerometerInputRateGear : MonoBehaviour
     // set per person
     public float height = 1.75f;
     public float ht = 0.05f;         
-    public float lt = -0.03f;
+    public  float lt = -0.03f;
 
     public float a = -0.08928571f;
     public float b = 0.78571429f;
