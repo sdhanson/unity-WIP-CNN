@@ -18,15 +18,16 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     // set per person
     public float height = 1.75f;
 
-
     Thread run;
     Thread collect;
 
+    // used to determine direction to walk
     private float yaw;
     private float rad;
     private float xVal;
     private float zVal;
 
+    // determine if person is picking up speed or slowing down
     public static float velocity = 0f;
     public static float method1StartTimeGrow = 0f;
     public static float method1StartTimeDecay = 0f;
@@ -50,10 +51,12 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     public TextAsset graphModel;
     private float[,,,] inputTensor = new float[1, 1, 60, 3];
 
-    // queue for keeping track of values for tensor
+    // list for keeping track of values for tensor
     private List<float> accelX;
     private List<float> accelY;
     private List<float> accelZ;
+
+    // list for smoothing out cnn output
     private List<float> latch;
     int latchSum = 0;
     int latchWidth = 30;
@@ -74,27 +77,25 @@ public class AccelerometerInputCNNGear : MonoBehaviour
     bool here = false;
     bool longTime = false;
     float line = 0f;
-
-
     int index = 0;
     int countCNN = 0;
     float total = 0;
     float test1 = 0f;
     float test2 = 0f;
     float test3 = 0f;
-
     bool one = true;
 
     int diff = 20;
 
     void Start()
     {
+        // tensorflowsharp requires this statement
 #if UNITY_ANDROID
 		TensorFlowSharp.Android.NativeBinding.Init ();
 #endif
         // enable the gyroscope on the phone
         Input.gyro.enabled = true;
-        
+
         // if we are on the right VR, then setup a client device to read transform data from
         if (Application.platform == RuntimePlatform.Android)
             SetupClient();
@@ -103,27 +104,28 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         eulerX = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x;
         eulerZ = InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z;
 
-        // initialize the cnn queue
+        // initialize the cnn queues
         accelX = new List<float>();
         accelY = new List<float>();
         accelZ = new List<float>();
         latch = new List<float>();
 
-        //start collection
+        // start collection thread
         collect = new Thread(manageCollection);
         collect.Start();
 
+        // start cnn thread - different thread so cnn doesn't interfere with graphics
         run = new Thread(manageCNN);
         run.Start();
     }
 
-    void FixedUpdate() //was previously FixedUpdate()
+    void FixedUpdate()
     {
         // send the current transform data to the server (should probably be wrapped in an if isAndroid but I haven't tested)
 
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
-
+        // debugging output
         string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 10} {9, 10} {10, 10} {11, 10} {12,10} {13,10} {14,10} {15,10} {16,10} {17,10} {18,10} {19,10} {20,10}",
                                 DateTime.Now.ToString(), Time.time,
 
@@ -154,16 +156,20 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         run.Abort();
     }
 
+    // manages the accelerometer data collection thread
     void manageCollection()
     {
+        // thread sleep for 1000 as to not connect information on boot
         Thread.Sleep(1000);
         while (true)
         {
+            // sleeping time is linked to collection time
             Thread.Sleep(5);
             collectValues();
         }
     }
 
+    // poll the Gear for gyro data
     void collectValues()
     {
         float currX = Input.gyro.userAcceleration.x;
@@ -171,6 +177,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         float currZ = Input.gyro.userAcceleration.z;
         test = currY;
 
+        // collect - want the list to always be inputWidth
         if (accelX.Count < inputWidth)
         {
             accelX.Add(currX);
@@ -189,14 +196,21 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         line = currY;
     }
 
+    // thread to manage the CNN
     void manageCNN()
     {
 
         while(true)
         {
+            // sleeps so doesn't run while application is booting
             Thread.Sleep(50);
+
+            // time is for debugging
             float prev = Time.time;
+            
+            // run the cnn
             evaluate();
+
             float len = Time.time - prev;
             diff = (int)((0.5 - len)*1000);
             if(diff < 0)
@@ -206,12 +220,14 @@ public class AccelerometerInputCNNGear : MonoBehaviour
         }
     }
 
+    // run the CNN
     void evaluate ()
 	{
-        // convert from list to array 
+        // only run CNN if we have enough accelerometer values 
         if (accelX.Count == inputWidth)
         {
-
+            // convert from list to tensor
+            // if tensor is 1 under, add dummy last value
             int i;
             for (i = 0; i < accelX.Count; i++)
             {
@@ -241,6 +257,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
                 inputTensor[0, 0, inputWidth - 1, 2] = 0;
             }
 
+            // tensor output variable
             float[,] recurrentTensor;
 
             // create tensorflow model
@@ -251,7 +268,6 @@ public class AccelerometerInputCNNGear : MonoBehaviour
                 var runner = session.GetRunner();
 
                 // do input tensor list to array and make it one dimensional
-                //var trainingInput = graph.Placeholder(TFDataType.Float, new TFShape(1, 1, 90, 1));
                 TFTensor input = inputTensor;
 
 
@@ -264,6 +280,8 @@ public class AccelerometerInputCNNGear : MonoBehaviour
                 // run model
                 recurrentTensor = runner.Run()[0].GetValue() as float[,];
                 here = true;
+
+                // dispose resources - keeps cnn from breaking down later
                 session.Dispose();
                 graph.Dispose();
 
@@ -274,6 +292,7 @@ public class AccelerometerInputCNNGear : MonoBehaviour
             int highInd = -1;
             sum = 0f;
 
+            // *MAKE SURE ACTIVITYINDEXCHOICES MATCHES THE NUMBER OF CHOICES*
             for (int j = 0; j < activityIndexChoices; j++)
             {
 
@@ -295,8 +314,12 @@ public class AccelerometerInputCNNGear : MonoBehaviour
                 // debugging - sum should = 1 at the end
                 sum += confidence;
             }
+
+            // debugging
             test1 = recurrentTensor[0, 0];
             test2 = recurrentTensor[0, 1];
+
+            // used in movement to see if we should be moving
             index = highInd;
             countCNN++;
         }
@@ -335,8 +358,11 @@ public class AccelerometerInputCNNGear : MonoBehaviour
 		zVal = Mathf.Cos (rad);
 		xVal = Mathf.Sin (rad);
     	
-    		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 15f));
-        if(latch.Count < latchWidth)
+    	bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 15f));
+
+        // smooth the cnn output 
+        // can have a large latch value bc exponential walking will decrease to 0 for us
+        if (latch.Count < latchWidth)
         {
             latch.Add(index);
             latchSum += index;
@@ -348,25 +374,18 @@ public class AccelerometerInputCNNGear : MonoBehaviour
             latch.Add(index);
         }
         
+        // use cnn to determine if walking
         if (index != standIndex || latchSum > 0) {
 			walking = true;
 		} else {
       			walking = false;
     	}
-        //if (!walking || looking)
-        //{
-        //    velocity = 0f;
-        //}
-        //else
-        //{
-        //    velocity = 2.2f;
-        //}
 
+        // check looking condition and use exponential values to mimic walking cadence
         if (!walking || looking)
         {
             velocity = 0f;
-        }
-        else
+        } else
         {
             if ((Input.gyro.userAcceleration.y >= 0.075f || Input.gyro.userAcceleration.y <= -0.075f))
             {

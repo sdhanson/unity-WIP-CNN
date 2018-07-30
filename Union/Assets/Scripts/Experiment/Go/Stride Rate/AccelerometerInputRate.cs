@@ -10,20 +10,24 @@ using UnityEngine.UI;
 
 public class AccelerometerInputRate : MonoBehaviour {
 
-    // set per person
+    // set per person - NEED TO GET HIGH AND LOW THRESHOLDS 
     public float height = 1.75f;
     public float ht = 2.8f;
     public float lt = -2.2f;
 
+    // values for the INDIVIDUALIZED velocity equation
+    // given in python script that quadratically fits freq and speed
     public float a = -0.2536f;
     public float b = 1.03965f;
     public float c = 0.30079592f;
 
+    // used to determine direction to walk
     private float yaw;
     private float rad;
     private float xVal;
     private float zVal;
 
+    // determine if person is picking up speed or slowing down
     public static float velocity = 0f;
     public static float method1StartTimeGrow = 0f;
     public static float method1StartTimeDecay = 0f;
@@ -62,20 +66,19 @@ public class AccelerometerInputRate : MonoBehaviour {
     // if user hasn't stepped in a while, firstStep is set to true so there is no lag in the starting step
     private bool firstStep = true;
 
-    // variable for debugging to see if we are counting the right number of steps
+    // variable for debugging
     private float stepCount = 0f;
-    
     float totalVelocity = 0f;
     float totalVelocityMax = 0f;
     int totalVelocityCount = 0;
-
     float test = 0f;
 
-    // for the interpolation
+    // sara's values for the interpolation for debugging
     //float a = -0.08928571f;
     //float b = 0.78571429f;
     //float c = 0.42946429f;
 
+    // initialize display to get accelerometer from Oculus GO
     OVRDisplay display;
 
     void Start()
@@ -101,7 +104,7 @@ public class AccelerometerInputRate : MonoBehaviour {
 
         string path = Application.persistentDataPath + "/WIP_looking.txt";
 
-
+        // debug output
         string appendText = "\r\n" + String.Format("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10} {14, 10} {15, 10}",
                                 DateTime.Now.ToString(), Time.time,
 
@@ -139,16 +142,22 @@ public class AccelerometerInputRate : MonoBehaviour {
         // if not the first step, use equation to set velocityMax
         if (!firstStep)
         {
+            // get freq
             stepTime = Time.time - prevTime;
             float freq = 1.0f / stepTime;
+
+            // debug
             test = freq;
-           // velocityMax = a * Mathf.Pow(freq, 2.0f) + b * freq + c;
+
+            // set velocity max by determining velocity given frequency in predetermined quadratically fit equation
+            velocityMax = a * Mathf.Pow(freq, 2.0f) + b * freq + c;
         }
         else
         {
             velocityMax = 0.75f;
             firstStep = false;
         }
+
         // set time of last step to current time
         prevTime = Time.time;
     }
@@ -205,7 +214,6 @@ public class AccelerometerInputRate : MonoBehaviour {
         }
     }
 
-    // NOT IMPLEMENTED FOR THE GO YET
     // algorithm to determine if the user is looking around. Looking and walking generate similar gyro.accelerations, so we
     //want to ignore movements that could be spawned from looking around. Makes sure user's head orientation is in certain window
     bool look(double start, double curr, double diff)
@@ -245,12 +253,13 @@ public class AccelerometerInputRate : MonoBehaviour {
         zVal = Mathf.Cos(rad);
         xVal = Mathf.Sin(rad);
 
+        // check if person is looking around in X or Z directions
         bool looking = (look(eulerX, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.x, 20f) || look(eulerZ, InputTracking.GetLocalRotation(XRNode.Head).eulerAngles.z, 20f));
-        frequency();
-        //JUST USE SET VELOCITY MAX AT THE TIME TO SEE THE AVERAGE
-        velocityMax = 1.6f;
 
-        // if the user isn't looking then manage their walking - LOOKING ISNT IMPLEMENTED YET SO ALWAYS FALSE ATM
+        // set the velocity max by interpolating with freq
+        frequency();
+
+        // if the user isn't looking then manage their walking
         if (!looking)
         {
             if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
@@ -286,18 +295,17 @@ public class AccelerometerInputRate : MonoBehaviour {
             velocity = 0f;
         }
 
-        // low velocity means we haven't stepped in a while and reset firstStep to true
-        //		if (velocity < 0.2f) {
-        //			firstStep = true;
-        //		}
-
         // multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
         // by the unit vector in the look direction to get displacement.
         if(velocity < 0f)
         {
             velocity = 0f;
         }
+
+        // translate
         transform.Translate(xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
+
+        // debug
         totalVelocityMax += velocityMax;
         totalVelocity += velocity;
         totalVelocityCount++;

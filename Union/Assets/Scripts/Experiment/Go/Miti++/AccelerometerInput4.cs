@@ -10,12 +10,14 @@ using UnityEngine.UI;
 
 public class AccelerometerInput4 : MonoBehaviour
 {
-	private float yaw;
+    // used to determine direction to walk
+    private float yaw;
 	private float rad;
 	private float xVal;
 	private float zVal;
 
-	public static float velocity = 0f;
+    // determine if person is picking up speed or slowing down
+    public static float velocity = 0f;
 	public static float method1StartTimeGrow = 0f;
 	public static float method1StartTimeDecay = 0f;
 	public static bool wasOne = false;
@@ -30,8 +32,10 @@ public class AccelerometerInput4 : MonoBehaviour
 	private float decayRate = 0.2f;
 	bool looking = false;
 
-	OVRDisplay display;
+    // initialize display to get accelerometer from Oculus GO
+    OVRDisplay display;
 
+    // queue for determining if walking
 	Queue<float> sumQ;
 	float sum = 0;
 	int countQ = 0;
@@ -49,8 +53,10 @@ public class AccelerometerInput4 : MonoBehaviour
 		eulerX = InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x;
 		eulerZ = InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z;
 
-		display = new OVRDisplay ();
+        // initialize the oculus go display
+        display = new OVRDisplay ();
 
+        // initialize walking queue
 		sumQ = new Queue<float> ();
 	}
 
@@ -60,7 +66,7 @@ public class AccelerometerInput4 : MonoBehaviour
 		//Send the current transform data to the server (should probably be wrapped in an if isAndroid but I haven't tested)
 		string path = Application.persistentDataPath + "/WIP_looking.txt";
 
-
+        // debug output
 		string appendText = "\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15}", 
 			                    DateTime.Now.ToString (), Time.time,
 
@@ -83,6 +89,7 @@ public class AccelerometerInput4 : MonoBehaviour
 			myClient.Send (MESSAGE_DATA, new TDMessage (this.transform.localPosition, Camera.main.transform.eulerAngles));
 	}
 
+    // check if average walking speed is high enough to be considered walking - I DON'T THINK THIS IS BEING USED ANYWAY
 	float average ()
 	{
 		float curr = display.acceleration.y;
@@ -134,28 +141,39 @@ public class AccelerometerInput4 : MonoBehaviour
 		zVal = 0.55f * Mathf.Cos (rad);
 		xVal = 0.55f * Mathf.Sin (rad);
 
-		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
+        // check if person is looking around in X or Z directions
+        bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
 
 		if (!looking) {
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-				if (wasTwo) { //we are transitioning from phase 2 to 1
+			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
+				if (wasTwo)
+                { //we are transitioning from phase 2 to 1
 					method1StartTimeGrow = Time.time;
 					wasTwo = false;
 					wasOne = true;
 				}
-			} else {
-				if (wasOne) {
+			}
+            else
+            {
+				if (wasOne)
+                {
 					method1StartTimeDecay = Time.time;
 					wasOne = false;
 					wasTwo = true;
 				}
 			}
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
+			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
 				velocity = 3.0f - (3.0f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.5f); //grow
-			} else {
+			}
+            else
+            {
 				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
 			}
-		} else {
+		}
+        else
+        {
 			velocity = 0f;
 		}
 

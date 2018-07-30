@@ -10,18 +10,19 @@ using UnityEngine.UI;
 
 public class AccelerometerGearV2 : MonoBehaviour
 {
-    // set per person
+    // set per person - NEED TO GET HIGH AND LOW THRESHOLDS 
     public float height = 1.75f;
     public float ht = 0.25f;
     public float lt = -0.25f;
 
-
+    // used to determine direction to walk
     private float yaw;
 	private float rad;
 	private float xVal;
 	private float zVal;
 
-	public static float velocity = 0f;
+    // determine if person is picking up speed or slowing down
+    public static float velocity = 0f;
 	public static float method1StartTimeGrow = 0f;
 	public static float method1StartTimeDecay = 0f;
 	public static bool wasOne = false;
@@ -49,7 +50,6 @@ public class AccelerometerGearV2 : MonoBehaviour
 	private float prev = 0f;
 
 	private float decayRate = 0.2f;
-
 	private float velocityMax = 0.0f;
 
 	// variables for determining the step frequency
@@ -132,11 +132,17 @@ public class AccelerometerGearV2 : MonoBehaviour
 	{
 		// if this is the first step, prevTime can't be used or very low velocityMax, so set to 1.0f
 		// if not the first step, use equation to set velocityMax
-		if (!firstStep) {
-			stepTime = Time.time - prevTime;
+		if (!firstStep)
+        {
+            // get freq
+            stepTime = Time.time - prevTime;
 			float frequency = 1.0f / stepTime;
-			velocityMax = Mathf.Pow (((frequency / 1.57f) * (height / 1.72f)), 2);
-		} else {
+
+            // set velocity max with biomedical equation
+            velocityMax = Mathf.Pow (((frequency / 1.57f) * (height / 1.72f)), 2);
+		}
+        else
+        {
 			velocityMax = 0.75f;
 			firstStep = false;
 		}
@@ -144,19 +150,25 @@ public class AccelerometerGearV2 : MonoBehaviour
 		prevTime = Time.time;
 	}
 
-	void frequency ()
+    // checks to see if we are currently stepping and then calls setMax() to calculate velocity from discovered step frequency
+    void frequency ()
 	{
 		// if we aren't in the shadow of a previous step (aka if we aren't a secondary peak)
-		if (!alert && (Time.time > maxt)) {
+		if (!alert && (Time.time > maxt))
+        {
 			// if we aren't on alert (aka if we are currently just in noise territory and haven't hit some peak recently)
 			// checking to see if the signal is beyond the allowed window - INDIVIDUALIZED BOUNDARIES
-			if ((Input.gyro.userAcceleration.y < lt) || (Input.gyro.userAcceleration.y > ht)) {
+			if ((Input.gyro.userAcceleration.y < lt) || (Input.gyro.userAcceleration.y > ht))
+            {
 				alert = true;
 				// distingiush if the signal was high or low
-				if (Input.gyro.userAcceleration.y < lt) {
+				if (Input.gyro.userAcceleration.y < lt)
+                {
 					low = true;
 					high = false;
-				} else {
+				}
+                else
+                {
 					low = false;
 					high = true;
 				}
@@ -164,27 +176,21 @@ public class AccelerometerGearV2 : MonoBehaviour
 				maxy = Input.gyro.userAcceleration.y;
 				maxt = Time.time + 0.25f;
 			}
-		} else if (alert && (Time.time < maxt)) {
+		}
+        else if (alert && (Time.time < maxt))
+        {
 			// if we are in the alert zone and hit the outside of the other threshold,
 			// then this is a valid peak, call the set max function to determine new max velocity
-			if (unset && ((high && (Input.gyro.userAcceleration.y < lt)) || (low && (Input.gyro.userAcceleration.y > ht)))) {
+			if (unset && ((high && (Input.gyro.userAcceleration.y < lt)) || (low && (Input.gyro.userAcceleration.y > ht))))
+            {
 				stepCount++;
 				unset = false;
-				// a new high - so max acceleration should be reset
-				// but not for low - need to change time because step recognized now, but not the max value for future
-				// resetting of max time
-				//				if (low) {
-				//					maxy = display.acceleration.y;
-				//				}
 				maxt = Time.time + 0.25f;
 				setMax ();
 			}
-			// keep track of max in order to set final time window to ignore
-			//			if (display.acceleration.y > maxy) {
-			//				maxy = display.acceleration.y;
-			//				maxt = Time.time + 0.25f;
-			//			}
-		} else if (alert && (Time.time >= maxt)) {
+		}
+        else if (alert && (Time.time >= maxt))
+        {
 			// if we have left the max time zone, then reset necessary variables to false
 			maxy = -100;
 			alert = false;
@@ -247,11 +253,15 @@ public class AccelerometerGearV2 : MonoBehaviour
 		zVal = Mathf.Cos (rad);
 		xVal = Mathf.Sin (rad);
 
+        // set velocity max by using biomedical equation with freq
 		frequency ();
 
-		if (!walking) {
+		if (!walking)
+        {
 			velocity = 0f;
-		} else {
+		}
+        else
+        {
 			//Idea is that if the user's head movement is below 0.12 (but above threshold to be walking) then they 
 			//are slowing down. If user continues to walk, head movement will quickly reach > |0.12| again, but
 			//if they stop, then we are already decelerating and will not glide.
@@ -271,22 +281,38 @@ public class AccelerometerGearV2 : MonoBehaviour
 
 			//Movement is done exponentially. We want the user to quickly accelerate and quickly decelerate as to minimize
 			//starting and stopping latency.
-			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f)) {
+			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f))
+            {
 				velocity = velocityMax - (velocityMax - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.5f); //grow
-			} else {
-				if (velocity > 2.5f) {
+			}
+            else
+            {
+                // tons of different conditions to account for different people and minimizing stopping latency
+                if (velocity > 2.5f)
+                {
 					decayRate = 0.05f;
-				} else if (velocity > 2.0f) {
+				}
+                else if (velocity > 2.0f)
+                {
 					decayRate = 0.05f;
-				} else if (velocity > 1.0f) {
+				}
+                else if (velocity > 1.0f)
+                {
 					decayRate = 0.1f;
-				} else if (velocity < 0.5f) {
+				}
+                else if (velocity < 0.5f)
+                {
 					decayRate = 0.2f;
-				} else if (velocity < 0.1f) {
+				}
+                else if (velocity < 0.1f)
+                {
 					decayRate = 0.08f;
 				}
 				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
-				if (velocity < 0.01f) {
+
+                // if below certain point then reset variables so it can detect next step
+				if (velocity < 0.01f)
+                {
 					velocity = 0;
 					walking = false;
 					accelY.Clear ();

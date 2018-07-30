@@ -10,18 +10,19 @@ using UnityEngine.UI;
 
 public class AccelerometerInput6 : MonoBehaviour
 {
-    // set per person
+    // set per person - NEED TO GET HIGH AND LOW THRESHOLDS 
     public float height = 1.75f;
     public float ht = 2.8f;
     public float lt = -2.2f;
 
-
+    // used to determine direction to walk
     private float yaw;
 	private float rad;
 	private float xVal;
 	private float zVal;
 
-	public static float velocity = 0f;
+    // determine if person is picking up speed or slowing down
+    public static float velocity = 0f;
 	public static float method1StartTimeGrow = 0f;
 	public static float method1StartTimeDecay = 0f;
 	//phase one when above (+/-) 0.10 threshold
@@ -62,8 +63,8 @@ public class AccelerometerInput6 : MonoBehaviour
 	// variable for debugging to see if we are counting the right number of steps
 	private float stepCount = 0f;
 
-
-	OVRDisplay display;
+    // initialize display to get accelerometer from Oculus GO
+    OVRDisplay display;
 
 	void Start ()
 	{
@@ -89,7 +90,8 @@ public class AccelerometerInput6 : MonoBehaviour
 		string path = Application.persistentDataPath + "/WIP_looking.txt";
 
 
-		string appendText = "\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10}", 
+        // This text is always added, making the file longer over time if it is not deleted
+        string appendText = "\n" + String.Format ("{0,20} {1,7} {2, 15} {3, 15} {4, 15} {5, 15} {6, 15} {7, 8} {8, 15} {9, 10} {10, 10} {11, 10} {12, 10} {13, 10}", 
 			                    DateTime.Now.ToString (), Time.time,
 
 			                    "ACCELERATION_XYZ: ",
@@ -123,11 +125,17 @@ public class AccelerometerInput6 : MonoBehaviour
 	{
 		// if this is the first step, prevTime can't be used or very low velocityMax, so set to 1.0f
 		// if not the first step, use equation to set velocityMax
-		if (!firstStep) {
-			stepTime = Time.time - prevTime;
+		if (!firstStep)
+        {
+            // get freq
+            stepTime = Time.time - prevTime;
 			float frequency = 1.0f / stepTime;
-			velocityMax = Mathf.Pow (((frequency / 1.57f) * (height / 1.72f)), 2);
-		} else {
+
+            // set velocity max with biomedical equation
+            velocityMax = Mathf.Pow (((frequency / 1.57f) * (height / 1.72f)), 2);
+		}
+        else
+        {
 			velocityMax = 0.75f;
 			firstStep = false;
 		}
@@ -141,15 +149,20 @@ public class AccelerometerInput6 : MonoBehaviour
 		// if we aren't on alert (aka if we are currently just in noise territory and haven't hit some peak recently) AND
 		// if we aren't in the shadow of a previous step (aka if we aren't a secondary peak) then check to see if we have hit a high or low peak
 		// indicating we might be stepping 
-		if (!alert && (Time.time > maxt)) {
+		if (!alert && (Time.time > maxt))
+        {
 			// checking to see if the signal is beyond the allowed window - INDIVIDUALIZED BOUNDARIES
-			if ((display.acceleration.y < lt) || (display.acceleration.y > ht)) {
+			if ((display.acceleration.y < lt) || (display.acceleration.y > ht))
+            {
 				alert = true;
 				// distingiush if the signal was high or low
-				if (display.acceleration.y < lt) {
+				if (display.acceleration.y < lt)
+                {
 					low = true;
 					high = false;
-				} else {
+				}
+                else
+                {
 					low = false;
 					high = true;
 				}
@@ -158,16 +171,21 @@ public class AccelerometerInput6 : MonoBehaviour
 				maxy = display.acceleration.y;
 				maxt = Time.time + 0.25f;
 			}
-		} else if (alert && (Time.time < maxt)) {
+		}
+        else if (alert && (Time.time < maxt))
+        {
 			// if we are in the alert zone and hit the outside of the other threshold,
 			// then this is a valid peak, call the set max function to determine new max velocity
-			if (unset && ((high && (display.acceleration.y < lt)) || (low && (display.acceleration.y > ht)))) {
+			if (unset && ((high && (display.acceleration.y < lt)) || (low && (display.acceleration.y > ht))))
+            {
 				stepCount++;
 				unset = false;
 				maxt = Time.time + 0.25f;
 				setMax ();
 			}
-		} else if (alert && (Time.time >= maxt)) {
+		}
+        else if (alert && (Time.time >= maxt))
+        {
 			// if we have left the max time zone, then reset necessary variables
 			maxy = -100;
 			alert = false;
@@ -177,7 +195,6 @@ public class AccelerometerInput6 : MonoBehaviour
 		}
 	}
 
-	// NOT IMPLEMENTED FOR THE GO YET
 	// algorithm to determine if the user is looking around. Looking and walking generate similar gyro.accelerations, so we
 	//want to ignore movements that could be spawned from looking around. Makes sure user's head orientation is in certain window
 	bool look (double start, double curr, double diff)
@@ -210,38 +227,46 @@ public class AccelerometerInput6 : MonoBehaviour
 		zVal = Mathf.Cos (rad);
 		xVal = Mathf.Sin (rad);
 
-		bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
-		frequency ();
+        // check if person is looking around in X or Z directions
+        bool looking = (look (eulerX, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.x, 20f) || look (eulerZ, InputTracking.GetLocalRotation (XRNode.Head).eulerAngles.z, 20f));
 
-		// if the user isn't looking then manage their walking - LOOKING ISNT IMPLEMENTED YET SO ALWAYS FALSE ATM
+        // set velocity max by using biomedical equation with freq
+        frequency();
+
+		// if the user isn't looking then manage their walking
 		if (!looking) {
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-				if (wasTwo) { //we are transitioning from phase 2 to 1
+			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
+				if (wasTwo)
+                { //we are transitioning from phase 2 to 1
 					method1StartTimeGrow = Time.time;
 					wasTwo = false;
 					wasOne = true;
 				}
-			} else {
-				if (wasOne) {
+			}
+            else
+            {
+				if (wasOne)
+                {
 					method1StartTimeDecay = Time.time;
 					wasOne = false;
 					wasTwo = true;
 				}
 			}
-			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
+			if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
 				velocity = velocityMax - (velocityMax - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.2f); //grow
-			} else {
+			}
+            else
+            {
 				// if the acceleration values are low, indicates the user is walking slowly, and exponentially decrease the velocity to 0
 				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
 			}
-		} else {
+		}
+        else
+        {
 			velocity = 0f;
 		}
-
-		// low velocity means we haven't stepped in a while and reset firstStep to true
-//		if (velocity < 0.2f) {
-//			firstStep = true;
-//		}
 
 		// multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
 		// by the unit vector in the look direction to get displacement.

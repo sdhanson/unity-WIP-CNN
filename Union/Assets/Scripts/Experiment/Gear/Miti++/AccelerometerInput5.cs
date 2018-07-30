@@ -10,12 +10,14 @@ using UnityEngine.UI;
 
 public class AccelerometerInput5 : MonoBehaviour
 {
-	private float yaw;
+    // used to determine direction to walk
+    private float yaw;
 	private float rad;
 	private float xVal;
 	private float zVal;
 
-	public static float velocity = 0f;
+    // determine if person is picking up speed or slowing down
+    public static float velocity = 0f;
 	public static float method1StartTimeGrow = 0f;
 	public static float method1StartTimeDecay = 0f;
 	public static bool wasOne = false;
@@ -153,9 +155,9 @@ public class AccelerometerInput5 : MonoBehaviour
 		if (!walking) {
 			velocity = 0f;
 		} else {
-//		Idea is that if the user's head movement is below 0.12 (but above threshold to be walking) then they
-//		are slowing down. If user continues to walk, head movement will quickly reach > |0.12| again, but
-//		if they stop, then we are already decelerating and will not glide.
+                //Idea is that if the user's head movement is below 0.12 (but above threshold to be walking) then they
+                //are slowing down. If user continues to walk, head movement will quickly reach > |0.12| again, but
+                //if they stop, then we are already decelerating and will not glide.
 			if ((Input.gyro.userAcceleration.y >= 0.075f || Input.gyro.userAcceleration.y <= -0.075f)) {
 				if (wasTwo) { //we are transitioning from phase 2 to 1
 					method1StartTimeGrow = Time.time;
@@ -172,22 +174,38 @@ public class AccelerometerInput5 : MonoBehaviour
 	
 			//Movement is done exponentially. We want the user to quickly accelerate and quickly decelerate as to minimize
 			//starting and stopping latency.
-			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f)) {
+			if ((Input.gyro.userAcceleration.y >= 0.06f || Input.gyro.userAcceleration.y <= -0.06f))
+            {
 				velocity = 3.0f - (3.0f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.5f); //grow
-			} else {
-				if (velocity > 2.5f) {
+			}
+            else
+            {
+                // tons of different conditions to account for different people and minimizing stopping latency
+                if (velocity > 2.5f)
+                {
 					decayRate = 0.05f;
-				} else if (velocity > 2.0f) {
+				}
+                else if (velocity > 2.0f)
+                {
 					decayRate = 0.05f;
-				} else if (velocity > 1.0f) {
+				}
+                else if (velocity > 1.0f)
+                {
 					decayRate = 0.1f;
-				} else if (velocity < 0.5f) {
+				}
+                else if (velocity < 0.5f)
+                {
 					decayRate = 0.2f;
-				} else if (velocity < 0.1f) {
+				}
+                else if (velocity < 0.1f)
+                {
 					decayRate = 0.08f;
 				}
 				velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
-				if (velocity < 0.01f) {
+
+                // if below certain point then reset variables so it can detect next step
+                if (velocity < 0.01f)
+                {
 					velocity = 0;
 					walking = false;
 					accelY.Clear ();
