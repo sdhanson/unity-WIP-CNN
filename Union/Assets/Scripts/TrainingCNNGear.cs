@@ -67,7 +67,7 @@ public class TrainingCNNGear : MonoBehaviour
             }
 
 
-            string appendText = "Carlos," + "Standing," + Time.time + "," + Input.gyro.userAcceleration.x + "," +
+            string appendText = "Peter," + "Walking," + Time.time + "," + Input.gyro.userAcceleration.x + "," +
                                 Input.gyro.userAcceleration.y + "," +
                                 Input.gyro.userAcceleration.z +
                                 "," + changeX + "," +
