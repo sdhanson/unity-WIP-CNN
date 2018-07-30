@@ -476,39 +476,46 @@ public class AccelerometerInputCNN : MonoBehaviour
 
 		if (index != standIndex && index != lookIndex) {
 			walking = true;
-            velocity = 1.65f;
-		} else
+		}
+        // if the user isn't looking and is walking then set the velocity based on increasing or decreasing speed
+        if (!looking && walking)
+        {
+            if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
+                if (wasTwo)
+                { //we are transitioning from phase 2 to 1
+                    method1StartTimeGrow = Time.time;
+                    wasTwo = false;
+                    wasOne = true;
+                }
+            }
+            else
+            {
+                if (wasOne)
+                {
+                    method1StartTimeDecay = Time.time;
+                    wasOne = false;
+                    wasTwo = true;
+                }
+            }
+            if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f))
+            {
+                velocity = 1.65f - (1.65f - velocity) * Mathf.Exp((method1StartTimeGrow - Time.time) / 0.2f); //grow
+            }
+            else
+            {
+                // if the acceleration values are low, indicates the user is walking slowly, and exponentially decrease the velocity to 0
+                velocity = 0.0f - (0.0f - velocity) * Mathf.Exp((method1StartTimeDecay - Time.time) / decayRate); //decay
+            }
+        }
+        else
         {
             velocity = 0f;
         }
-		// if the user isn't looking and is walking then set the velocity based on increasing or decreasing speed
-	//	if (!looking && walking) {
-	//		if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-	//			if (wasTwo) { //we are transitioning from phase 2 to 1
-	//				method1StartTimeGrow = Time.time;
-	//				wasTwo = false;
-	//				wasOne = true;
-	//			}
-	//		} else {
-	//			if (wasOne) {
-	//				method1StartTimeDecay = Time.time;
-	//				wasOne = false;
-	//				wasTwo = true;
-	//			}
-	//		}
-	//		if ((display.acceleration.y >= 0.75f || display.acceleration.y <= -0.75f)) {
-	//			velocity = 1.65f - (1.65f - velocity) * Mathf.Exp ((method1StartTimeGrow - Time.time) / 0.2f); //grow
-	//		} else {
-	//			// if the acceleration values are low, indicates the user is walking slowly, and exponentially decrease the velocity to 0
-	//			velocity = 0.0f - (0.0f - velocity) * Mathf.Exp ((method1StartTimeDecay - Time.time) / decayRate); //decay
-	//		}
-	//	} else {
-	//		velocity = 0f;
-	//	}
 
-		// multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
-		// by the unit vector in the look direction to get displacement.
-		transform.Translate (xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
+        // multiply intended speed (called velocity) by delta time to get a distance, then multiply that distamce
+        // by the unit vector in the look direction to get displacement.
+        transform.Translate (xVal * velocity * Time.fixedDeltaTime, 0, zVal * velocity * Time.fixedDeltaTime);
 	}
 
 	#region NetworkingCode
